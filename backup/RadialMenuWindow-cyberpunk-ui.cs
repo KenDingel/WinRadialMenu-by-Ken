@@ -41,13 +41,12 @@ namespace RadialMenu
     private Ellipse _centerCircle = null!;
     private TextBlock _centerText = null!;
         private bool _isAnimating = false;
-        private bool _justShown = false;
         private readonly DispatcherTimer _hoverExecuteTimer;
 
         public RadialMenuWindow()
         {
             // Initialize hover execute timer
-            _hoverExecuteTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(200) };
+            _hoverExecuteTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
             _hoverExecuteTimer.Tick += (s, e) =>
             {
                 _hoverExecuteTimer.Stop();
@@ -84,15 +83,15 @@ namespace RadialMenu
             Background = Brushes.Transparent;
             Topmost = true;
             ShowInTaskbar = false;
-            Width = 2000 * _uiScale;
-            Height = 2000 * _uiScale;
+            Width = 600 * _uiScale;
+            Height = 600 * _uiScale;
             WindowStartupLocation = WindowStartupLocation.Manual;
             
             // Main canvas
             _canvas = new Canvas
             {
-                Width = 2000 * _uiScale,
-                Height = 2000 * _uiScale,
+                Width = 600 * _uiScale,
+                Height = 600 * _uiScale,
                 Background = Brushes.Transparent
             };
 
@@ -457,10 +456,6 @@ namespace RadialMenu
 
             Show();
             Activate();
-            _justShown = true;
-            var justShownTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
-            justShownTimer.Tick += (s, e) => { _justShown = false; justShownTimer.Stop(); };
-            justShownTimer.Start();
             AnimateIn();
         }
 
@@ -562,9 +557,9 @@ namespace RadialMenu
                 }
 
                 // Place ellipse at target but animate from origin
-                Canvas.SetLeft(ellipse, originPoint.X - nodeSize / 2);
-                Canvas.SetTop(ellipse, originPoint.Y - nodeSize / 2);
-                var translate = new TranslateTransform(0, 0);
+                Canvas.SetLeft(ellipse, targetX - nodeSize / 2);
+                Canvas.SetTop(ellipse, targetY - nodeSize / 2);
+                var translate = new TranslateTransform(originPoint.X - targetX, originPoint.Y - targetY);
                 var scale = new ScaleTransform(0.3, 0.3);
                 var tg = new TransformGroup();
                 tg.Children.Add(scale);
@@ -710,17 +705,19 @@ namespace RadialMenu
                 };
                 label.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
                 var labelSize = label.DesiredSize;
-                Canvas.SetLeft(label, originPoint.X - labelSize.Width / 2);
-                Canvas.SetTop(label, originPoint.Y - labelSize.Height / 2);
-                var labelTranslate = new TranslateTransform(0, 0);
-                var labelScale = new ScaleTransform(0.3, 0.3);
-                var labelTg = new TransformGroup();
-                labelTg.Children.Add(labelScale);
-                labelTg.Children.Add(labelTranslate);
-                label.RenderTransform = labelTg;
-                label.RenderTransformOrigin = new Point(0.5, 0.5);
+                Canvas.SetLeft(label, targetX - labelSize.Width / 2);
+                Canvas.SetTop(label, targetY - labelSize.Height / 2);
                 _canvas.Children.Add(label);
                 Panel.SetZIndex(label, 3);
+
+                // Animate translate and scale to origin -> target
+                var animX = new DoubleAnimation(originPoint.X - targetX, 0, TimeSpan.FromMilliseconds(320)) { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut } };
+                var animY = new DoubleAnimation(originPoint.Y - targetY, 0, TimeSpan.FromMilliseconds(320)) { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut } };
+                var animScale = new DoubleAnimation(0.3, 1.0, TimeSpan.FromMilliseconds(320)) { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut } };
+                translate.BeginAnimation(TranslateTransform.XProperty, animX);
+                translate.BeginAnimation(TranslateTransform.YProperty, animY);
+                scale.BeginAnimation(ScaleTransform.ScaleXProperty, animScale);
+                scale.BeginAnimation(ScaleTransform.ScaleYProperty, animScale);
 
                 var menuItem = new RadialMenuItem
                 {
@@ -729,8 +726,8 @@ namespace RadialMenu
                     LabelText = label,
                     Angle = angle,
                     BaseColor = baseColor,
-                    Center = _centerPoint,
-                    Radius = spreadRadius
+                    Center = new Point(targetX, targetY),
+                    Radius = nodeSize / 2
                 };
 
                 _menuItems.Add(menuItem);
@@ -835,8 +832,8 @@ namespace RadialMenu
                     Stroke = new SolidColorBrush(Color.FromArgb(255, 255, 255, 255)), // White neon stroke
                     StrokeThickness = 1.5
                 };
-                Canvas.SetLeft(ellipse, parent.Center.X - nodeSize / 2);
-                Canvas.SetTop(ellipse, parent.Center.Y - nodeSize / 2);
+                Canvas.SetLeft(ellipse, targetX - nodeSize / 2);
+                Canvas.SetTop(ellipse, targetY - nodeSize / 2);
 
                 // Add multi-layer neon glow effect with drop shadow
                 var glowEffect = new DropShadowEffect 
@@ -891,7 +888,7 @@ namespace RadialMenu
                 connectors.Add(line);
 
                 // initial transform from parent center -> will animate into place with spring
-                var translate = new TranslateTransform(0, 0);
+                var translate = new TranslateTransform(parent.Center.X - targetX, parent.Center.Y - targetY);
                 var scale = new ScaleTransform(0.3, 0.3);
                 var tg = new TransformGroup();
                 tg.Children.Add(scale);
@@ -912,15 +909,8 @@ namespace RadialMenu
                 };
                 label.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
                 var labelSize = label.DesiredSize;
-                Canvas.SetLeft(label, parent.Center.X - labelSize.Width / 2);
-                Canvas.SetTop(label, parent.Center.Y - labelSize.Height / 2);
-                var labelTranslate = new TranslateTransform(0, 0);
-                var labelScale = new ScaleTransform(0.3, 0.3);
-                var labelTg = new TransformGroup();
-                labelTg.Children.Add(labelScale);
-                labelTg.Children.Add(labelTranslate);
-                label.RenderTransform = labelTg;
-                label.RenderTransformOrigin = new Point(0.5, 0.5);
+                Canvas.SetLeft(label, targetX - labelSize.Width / 2);
+                Canvas.SetTop(label, targetY - labelSize.Height / 2);
                 _canvas.Children.Add(label);
 
                 // Animate line end to target point
@@ -929,6 +919,15 @@ namespace RadialMenu
                 line.BeginAnimation(System.Windows.Shapes.Line.X2Property, x2Anim);
                 line.BeginAnimation(System.Windows.Shapes.Line.Y2Property, y2Anim);
 
+                // animate translate and scale with springy elastic ease
+                var animX = new DoubleAnimation(parent.Center.X - targetX, 0, TimeSpan.FromMilliseconds(520)) { EasingFunction = new ElasticEase { Oscillations = 2, Springiness = 8, EasingMode = EasingMode.EaseOut } };
+                var animY = new DoubleAnimation(parent.Center.Y - targetY, 0, TimeSpan.FromMilliseconds(520)) { EasingFunction = new ElasticEase { Oscillations = 2, Springiness = 8, EasingMode = EasingMode.EaseOut } };
+                var animScale = new DoubleAnimation(0.3, 1.0, TimeSpan.FromMilliseconds(520)) { EasingFunction = new ElasticEase { Oscillations = 2, Springiness = 8, EasingMode = EasingMode.EaseOut } };
+                translate.BeginAnimation(TranslateTransform.XProperty, animX);
+                translate.BeginAnimation(TranslateTransform.YProperty, animY);
+                scale.BeginAnimation(ScaleTransform.ScaleXProperty, animScale);
+                scale.BeginAnimation(ScaleTransform.ScaleYProperty, animScale);
+
                 var menuItem = new RadialMenuItem
                 {
                     Config = cfg,
@@ -936,8 +935,8 @@ namespace RadialMenu
                     LabelText = label,
                     Angle = angle,
                     BaseColor = baseColor,
-                    Center = parent.Center,
-                    Radius = childDistance
+                    Center = new Point(targetX, targetY),
+                    Radius = nodeSize / 2
                 };
 
                 _menuItems.Add(menuItem);
@@ -1012,8 +1011,6 @@ namespace RadialMenu
 
         private void OnMouseMove(object sender, MouseEventArgs e)
         {
-            if (_isAnimating) return;
-
             var mousePos = e.GetPosition(_canvas);
             var dx = mousePos.X - _centerPoint.X;
             var dy = mousePos.Y - _centerPoint.Y;
@@ -1332,7 +1329,6 @@ namespace RadialMenu
 
         private void OnDeactivated(object? sender, EventArgs e)
         {
-            if (_justShown) return;
             HideMenu();
         }
 
@@ -1345,81 +1341,30 @@ namespace RadialMenu
         private void AnimateIn()
         {
             _isAnimating = true;
+            Opacity = 0;
+            var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200));
+            fadeIn.Completed += (s, e) => _isAnimating = false;
+            BeginAnimation(OpacityProperty, fadeIn);
 
             // Animate menu items
             foreach (var item in _menuItems)
             {
-                // Calculate target position
-                var targetX = item.Center.X + Math.Cos(item.Angle * Math.PI / 180) * item.Radius;
-                var targetY = item.Center.Y + Math.Sin(item.Angle * Math.PI / 180) * item.Radius;
-                var offsetX = targetX - item.Center.X;
-                var offsetY = targetY - item.Center.Y;
-
-                // Animate ellipse
-                var pulseGroup = item.Visual.RenderTransform as TransformGroup;
-                if (pulseGroup != null && pulseGroup.Children.Count >= 1)
+                var transform = new ScaleTransform(0.5, 0.5, _centerPoint.X, _centerPoint.Y);
+                item.Visual.RenderTransform = transform;
+                
+                var scaleAnim = new DoubleAnimation(0.5, 1, TimeSpan.FromMilliseconds(300))
                 {
-                    var tg = pulseGroup.Children[0] as TransformGroup;
-                    if (tg != null && tg.Children.Count >= 2)
-                    {
-                        var scale = tg.Children[0] as ScaleTransform;
-                        var translate = tg.Children[1] as TranslateTransform;
-                        if (scale != null && translate != null)
-                        {
-                            var scaleAnim = new DoubleAnimation(0.3, 1, TimeSpan.FromMilliseconds(300))
-                            {
-                                EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.5 }
-                            };
-                            scaleAnim.Completed += (s, e) => _isAnimating = false;
-                            var translateAnimX = new DoubleAnimation(0, offsetX, TimeSpan.FromMilliseconds(300))
-                            {
-                                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-                            };
-                            var translateAnimY = new DoubleAnimation(0, offsetY, TimeSpan.FromMilliseconds(300))
-                            {
-                                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-                            };
-                            scale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleAnim);
-                            scale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleAnim);
-                            translate.BeginAnimation(TranslateTransform.XProperty, translateAnimX);
-                            translate.BeginAnimation(TranslateTransform.YProperty, translateAnimY);
-                        }
-                    }
-                }
-
-                // Animate label
-                var labelTg = item.LabelText.RenderTransform as TransformGroup;
-                if (labelTg != null && labelTg.Children.Count >= 2)
-                {
-                    var labelScale = labelTg.Children[0] as ScaleTransform;
-                    var labelTranslate = labelTg.Children[1] as TranslateTransform;
-                    if (labelScale != null && labelTranslate != null)
-                    {
-                        var labelScaleAnim = new DoubleAnimation(0.3, 1, TimeSpan.FromMilliseconds(300))
-                        {
-                            EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.5 }
-                        };
-                        var labelTranslateAnimX = new DoubleAnimation(0, offsetX, TimeSpan.FromMilliseconds(300))
-                        {
-                            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-                        };
-                        var labelTranslateAnimY = new DoubleAnimation(0, offsetY, TimeSpan.FromMilliseconds(300))
-                        {
-                            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-                        };
-                        labelScale.BeginAnimation(ScaleTransform.ScaleXProperty, labelScaleAnim);
-                        labelScale.BeginAnimation(ScaleTransform.ScaleYProperty, labelScaleAnim);
-                        labelTranslate.BeginAnimation(TranslateTransform.XProperty, labelTranslateAnimX);
-                        labelTranslate.BeginAnimation(TranslateTransform.YProperty, labelTranslateAnimY);
-                    }
-                }
+                    EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.5 }
+                };
+                transform.BeginAnimation(ScaleTransform.ScaleXProperty, scaleAnim);
+                transform.BeginAnimation(ScaleTransform.ScaleYProperty, scaleAnim);
             }
         }
 
         private void AnimateOut(Action onComplete)
         {
             _isAnimating = true;
-            var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(50));
+            var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(500));
             fadeOut.Completed += (s, e) =>
             {
                 _isAnimating = false;
@@ -1618,42 +1563,41 @@ namespace RadialMenu
             return p;
         }
     }
-}
 
-// Data classes
-public class RadialMenuItem
-{
-    public ConfigItem Config { get; set; } = new();
-    public System.Windows.Shapes.Shape Visual { get; set; } = new System.Windows.Shapes.Path();
-    public TextBlock LabelText { get; set; } = new();
-    public double Angle { get; set; }
-    public Color BaseColor { get; set; }
-    public Point Center { get; set; }
-    public double Radius { get; set; }
-    public bool Expanded { get; set; } = false;
-}
+    // Data classes
+    public class RadialMenuItem
+    {
+        public ConfigItem Config { get; set; } = new();
+        public System.Windows.Shapes.Shape Visual { get; set; } = new System.Windows.Shapes.Path();
+        public TextBlock LabelText { get; set; } = new();
+        public double Angle { get; set; }
+        public Color BaseColor { get; set; }
+        public Point Center { get; set; }
+        public double Radius { get; set; }
+        public bool Expanded { get; set; } = false;
+    }
 
-public class MenuLevel
-{
-    public List<ConfigItem> Items { get; set; } = new();
-    public string Name { get; set; } = "MENU";
-    public Point? Origin { get; set; }
-    public List<RadialMenuItem>? CreatedNodes { get; set; }
-    public List<UIElement>? Connectors { get; set; }
-}
+    public class MenuLevel
+    {
+        public List<ConfigItem> Items { get; set; } = new();
+        public string Name { get; set; } = "MENU";
+        public Point? Origin { get; set; }
+        public List<RadialMenuItem>? CreatedNodes { get; set; }
+        public List<UIElement>? Connectors { get; set; }
+    }
 
-public class MenuConfiguration
-{
-    public List<ConfigItem> Items { get; set; } = new();
-}
+    public class MenuConfiguration
+    {
+        public List<ConfigItem> Items { get; set; } = new();
+    }
 
-public class ConfigItem
-{
-    public string Label { get; set; } = "";
-    public string Icon { get; set; } = "📄";
-    public string? Color { get; set; }
-    public string? Action { get; set; }
-    public string? Path { get; set; }
-    public List<ConfigItem>? Submenu { get; set; }
+    public class ConfigItem
+    {
+        public string Label { get; set; } = "";
+        public string Icon { get; set; } = "📄";
+        public string? Color { get; set; }
+        public string? Action { get; set; }
+        public string? Path { get; set; }
+        public List<ConfigItem>? Submenu { get; set; }
+    }
 }
-

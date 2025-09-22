@@ -15,6 +15,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Remove="tests\**" />
+    <Compile Remove="backup\**" />
   </ItemGroup>
   <ItemGroup>
     <None Update="config.json">
