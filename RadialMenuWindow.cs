@@ -791,12 +791,17 @@ namespace RadialMenu
             var brightColor = Color.FromArgb(240, item.BaseColor.R, item.BaseColor.G, item.BaseColor.B);
             item.Visual.Fill = new SolidColorBrush(brightColor);
 
-            // Increase glow
+            // Highlight stroke
+            item.Visual.Stroke = new SolidColorBrush(Colors.White);
+            item.Visual.StrokeThickness = 3;
+
+            // Increase glow with brighter color
             if (item.Visual.Effect is DropShadowEffect glow)
             {
-                var opa = new DoubleAnimation(glow.Opacity, 0.9, TimeSpan.FromMilliseconds(150));
+                glow.Color = Colors.White; // Use white for better glow effect
+                var opa = new DoubleAnimation(glow.Opacity, 1.0, TimeSpan.FromMilliseconds(150));
                 glow.BeginAnimation(DropShadowEffect.OpacityProperty, opa);
-                glow.BlurRadius = 20;
+                glow.BlurRadius = 25; // Increased blur for more prominent glow
             }
 
             // Bold text
@@ -822,8 +827,13 @@ namespace RadialMenu
 
                 item.Visual.Fill = new SolidColorBrush(Color.FromArgb(220, item.BaseColor.R, item.BaseColor.G, item.BaseColor.B));
                 
+                // Reset stroke
+                item.Visual.Stroke = new SolidColorBrush(Color.FromArgb(255, item.BaseColor.R, item.BaseColor.G, item.BaseColor.B));
+                item.Visual.StrokeThickness = 2;
+                
                 if (item.Visual.Effect is DropShadowEffect glow)
                 {
+                    glow.Color = item.BaseColor; // Reset to item color
                     var opa = new DoubleAnimation(glow.Opacity, 0.0, TimeSpan.FromMilliseconds(150));
                     glow.BeginAnimation(DropShadowEffect.OpacityProperty, opa);
                     glow.BlurRadius = 12;

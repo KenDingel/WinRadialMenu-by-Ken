@@ -117,8 +117,11 @@ namespace RadialMenu
 
         private void ShowSettings()
         {
-            var settingsWindow = new Views.SettingsWindow();
-            settingsWindow.ShowDialog();
+            Dispatcher.Invoke(() =>
+            {
+                var settingsWindow = new Views.SettingsWindow();
+                settingsWindow.ShowDialog();
+            });
         }
 
         protected override void OnExit(ExitEventArgs e)
