@@ -1,0 +1,270 @@
+{
+  "Items": [
+    {
+      "Label": "Apps",
+      "Icon": "📱",
+      "Color": "#FF4CAF50",
+      "Submenu": [
+        {
+          "Label": "VS Code",
+          "Icon": "📝",
+          "Action": "launch",
+          "Path": "code"
+        },
+        {
+          "Label": "Terminal",
+          "Icon": "⌨",
+          "Action": "launch",
+          "Path": "wt"
+        },
+        {
+          "Label": "Calculator",
+          "Icon": "🔢",
+          "Action": "launch",
+          "Path": "calc"
+        },
+        {
+          "Label": "Notepad",
+          "Icon": "📄",
+          "Action": "launch",
+          "Path": "notepad"
+        },
+        {
+          "Label": "Paint",
+          "Icon": "🎨",
+          "Action": "launch",
+          "Path": "mspaint"
+        }
+      ]
+    },
+    {
+      "Label": "Web",
+      "Icon": "🌐",
+      "Color": "#FF2196F3",
+      "Submenu": [
+        {
+          "Label": "GitHub",
+          "Icon": "🐙",
+          "Action": "url",
+          "Path": "https://github.com"
+        },
+        {
+          "Label": "Google",
+          "Icon": "🔍",
+          "Action": "url",
+          "Path": "https://google.com"
+        },
+        {
+          "Label": "YouTube",
+          "Icon": "📺",
+          "Action": "url",
+          "Path": "https://youtube.com"
+        },
+        {
+          "Label": "Gmail",
+          "Icon": "📧",
+          "Action": "url",
+          "Path": "https://gmail.com"
+        },
+        {
+          "Label": "ChatGPT",
+          "Icon": "🤖",
+          "Action": "url",
+          "Path": "https://chat.openai.com"
+        }
+      ]
+    },
+    {
+      "Label": "Folders",
+      "Icon": "📁",
+      "Color": "#FFFFC107",
+      "Submenu": [
+        {
+          "Label": "Documents",
+          "Icon": "📑",
+          "Action": "folder",
+          "Path": "%USERPROFILE%\\Documents"
+        },
+        {
+          "Label": "Downloads",
+          "Icon": "⬇",
+          "Action": "folder",
+          "Path": "%USERPROFILE%\\Downloads"
+        },
+        {
+          "Label": "Desktop",
+          "Icon": "🖥",
+          "Action": "folder",
+          "Path": "%USERPROFILE%\\Desktop"
+        },
+        {
+          "Label": "Pictures",
+          "Icon": "🖼",
+          "Action": "folder",
+          "Path": "%USERPROFILE%\\Pictures"
+        },
+        {
+          "Label": "C: Drive",
+          "Icon": "💾",
+          "Action": "folder",
+          "Path": "C:\\"
+        }
+      ]
+    },
+    {
+      "Label": "System",
+      "Icon": "⚙",
+      "Color": "#FF9C27B0",
+      "Submenu": [
+        {
+          "Label": "Task Manager",
+          "Icon": "📊",
+          "Action": "launch",
+          "Path": "taskmgr"
+        },
+        {
+          "Label": "Control Panel",
+          "Icon": "🎛",
+          "Action": "launch",
+          "Path": "control"
+        },
+        {
+          "Label": "Settings",
+          "Icon": "⚙",
+          "Action": "launch",
+          "Path": "ms-settings:"
+        },
+        {
+          "Label": "Device Manager",
+          "Icon": "🔌",
+          "Action": "launch",
+          "Path": "devmgmt.msc"
+        },
+        {
+          "Label": "Disk Management",
+          "Icon": "💿",
+          "Action": "launch",
+          "Path": "diskmgmt.msc"
+        }
+      ]
+    },
+    {
+      "Label": "Power",
+      "Icon": "⚡",
+      "Color": "#FFF44336",
+      "Submenu": [
+        {
+          "Label": "Lock",
+          "Icon": "🔒",
+          "Action": "command",
+          "Path": "rundll32.exe user32.dll,LockWorkStation"
+        },
+        {
+          "Label": "Sleep",
+          "Icon": "😴",
+          "Action": "command",
+          "Path": "rundll32.exe powrprof.dll,SetSuspendState 0,1,0"
+        },
+        {
+          "Label": "Restart",
+          "Icon": "🔄",
+          "Action": "command",
+          "Path": "shutdown /r /t 0"
+        },
+        {
+          "Label": "Shutdown",
+          "Icon": "⏻",
+          "Action": "command",
+          "Path": "shutdown /s /t 0"
+        }
+      ]
+    },
+    {
+      "Label": "Media",
+      "Icon": "🎵",
+      "Color": "#FFFF9800",
+      "Submenu": [
+        {
+          "Label": "Spotify",
+          "Icon": "🎵",
+          "Action": "launch",
+          "Path": "spotify"
+        },
+        {
+          "Label": "VLC",
+          "Icon": "🎬",
+          "Action": "launch",
+          "Path": "vlc"
+        },
+        {
+          "Label": "Volume Mixer",
+          "Icon": "🔊",
+          "Action": "launch",
+          "Path": "sndvol"
+        },
+        {
+          "Label": "Sound Settings",
+          "Icon": "🎚",
+          "Action": "launch",
+          "Path": "ms-settings:sound"
+        }
+      ]
+    },
+    {
+      "Label": "Tools",
+      "Icon": "🔧",
+      "Color": "#FF00BCD4",
+      "Submenu": [
+        {
+          "Label": "Snipping Tool",
+          "Icon": "✂",
+          "Action": "launch",
+          "Path": "SnippingTool"
+        },
+        {
+          "Label": "PowerShell",
+          "Icon": "💻",
+          "Action": "launch",
+          "Path": "pwsh"
+        },
+        {
+          "Label": "CMD",
+          "Icon": "📟",
+          "Action": "launch",
+          "Path": "cmd"
+        },
+        {
+          "Label": "Registry Editor",
+          "Icon": "📝",
+          "Action": "launch",
+          "Path": "regedit"
+        }
+      ]
+    },
+    {
+      "Label": "Games",
+      "Icon": "🎮",
+      "Color": "#FF8BC34A",
+      "Submenu": [
+        {
+          "Label": "Steam",
+          "Icon": "🎮",
+          "Action": "launch",
+          "Path": "steam://open/main"
+        },
+        {
+          "Label": "Discord",
+          "Icon": "💬",
+          "Action": "launch",
+          "Path": "discord"
+        },
+        {
+          "Label": "Epic Games",
+          "Icon": "🎯",
+          "Action": "launch",
+          "Path": "com.epicgames.launcher://apps"
+        }
+      ]
+    }
+  ]
+}
