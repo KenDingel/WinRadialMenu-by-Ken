@@ -12,6 +12,7 @@ using System.Diagnostics;
 using System.IO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using System.Windows.Threading;
 
 namespace RadialMenu
 {
@@ -40,9 +41,21 @@ namespace RadialMenu
     private Ellipse _centerCircle = null!;
     private TextBlock _centerText = null!;
         private bool _isAnimating = false;
+        private readonly DispatcherTimer _hoverExecuteTimer;
 
         public RadialMenuWindow()
         {
+            // Initialize hover execute timer
+            _hoverExecuteTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+            _hoverExecuteTimer.Tick += (s, e) =>
+            {
+                _hoverExecuteTimer.Stop();
+                if (_hoveredItem != null)
+                {
+                    ExecuteItem(_hoveredItem);
+                }
+            };
+
             // Attempt to read UI scale from settings before creating UI elements so sizes/positions are consistent
             try
             {
@@ -709,6 +722,7 @@ namespace RadialMenu
             if (distance < effectiveInner)
             {
                 UnhoverAll();
+                _hoverExecuteTimer.Stop();
                 return;
             }
 
@@ -731,9 +745,11 @@ namespace RadialMenu
             if (hoveredItem != _hoveredItem)
             {
                 UnhoverAll();
+                _hoverExecuteTimer.Stop(); // Stop any pending execution
                 if (hoveredItem != null)
                 {
                     HoverItem(hoveredItem);
+                    _hoverExecuteTimer.Start(); // Start timer for new hover
                 }
                 _hoveredItem = hoveredItem;
             }
@@ -969,6 +985,7 @@ namespace RadialMenu
 
         private void HideMenu()
         {
+            _hoverExecuteTimer.Stop();
             AnimateOut(() => Hide());
         }
 

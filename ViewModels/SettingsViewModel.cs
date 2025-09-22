@@ -381,15 +381,19 @@ namespace RadialMenu.ViewModels
             IsDirty = true;
         }
 
+        // Implemented the Save method to persist settings
         private void Save()
         {
             try
             {
                 _settingsService.Save(_working);
-                IsDirty = false;
-                SaveCommand?.RaiseCanExecuteChanged();
+                _isDirty = false;
+                Log("Settings saved successfully.");
             }
-            catch { }
+            catch (Exception ex)
+            {
+                Log($"Error saving settings: {ex.Message}");
+            }
         }
 
         private void Cancel()
