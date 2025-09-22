@@ -1,0 +1,8 @@
+<UserControl x:Class="RadialMenu.Controls.HotkeyCaptureControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Height="36" Width="260">
+    <Border Background="#222" Padding="6" CornerRadius="4">
+        <TextBox x:Name="HotkeyBox" Background="Transparent" BorderThickness="0" Foreground="White" IsReadOnly="True"/>
+    </Border>
+</UserControl>

@@ -13,7 +13,10 @@ namespace RadialMenu
         private TaskbarIcon? _notifyIcon;
         private RadialMenuWindow? _radialMenu;
         private GlobalHotKey? _hotKey;
+        private GlobalHotKey? _settingsHotKey;
         private Mutex? _mutex;
+        private Services.SettingsService? _settingsService;
+        public Services.SettingsService? SettingsService => _settingsService;
 
         protected override void OnStartup(StartupEventArgs e)
         {
@@ -29,6 +32,21 @@ namespace RadialMenu
 
             base.OnStartup(e);
 
+            // Initialize settings service
+            _settingsService = new Services.SettingsService();
+            var settings = _settingsService.Load();
+            _settingsService.SettingsSaved += () =>
+            {
+                Dispatcher.Invoke(() =>
+                {
+                    try
+                    {
+                        _radialMenu?.ReloadConfiguration();
+                    }
+                    catch { }
+                });
+            };
+
             // Create system tray icon
             CreateNotifyIcon();
 
@@ -43,6 +61,13 @@ namespace RadialMenu
                     MessageBoxButton.OK, MessageBoxImage.Warning);
             }
 
+            // Register settings hotkey (Ctrl+Alt+S)
+            _settingsHotKey = new GlobalHotKey(GlobalHotKey.MOD_CONTROL | GlobalHotKey.MOD_ALT, Keys.S, ShowSettings);
+            if (!_settingsHotKey.Register())
+            {
+                // Optional: log or message
+            }
+
             // Hide from taskbar
             MainWindow = _radialMenu;
         }
@@ -52,7 +77,7 @@ namespace RadialMenu
             _notifyIcon = new TaskbarIcon
             {
                 Icon = System.Drawing.Icon.ExtractAssociatedIcon(System.Diagnostics.Process.GetCurrentProcess().MainModule!.FileName),
-                ToolTipText = "RadialMenu - Press Win+F12 to activate"
+                ToolTipText = "RadialMenu - Press Win+F12 to activate, Ctrl+Alt+S for settings"
             };
 
             _notifyIcon.TrayMouseDoubleClick += (s, e) => ShowSettings();
@@ -92,12 +117,13 @@ namespace RadialMenu
 
         private void ShowSettings()
         {
-            var settingsWindow = new SettingsWindow();
+            var settingsWindow = new Views.SettingsWindow();
             settingsWindow.ShowDialog();
         }
 
         protected override void OnExit(ExitEventArgs e)
         {
+            _settingsHotKey?.Unregister();
             _hotKey?.Unregister();
             _notifyIcon?.Dispose();
             _mutex?.Dispose();

@@ -266,3 +266,5 @@ Built with:
 ---
 
 Enjoy your new futuristic radial menu! Press Win+` to get started. 🚀
+
+For a full Settings redesign roadmap and implementation plan, see `SETTINGS-ROADMAP.md`.

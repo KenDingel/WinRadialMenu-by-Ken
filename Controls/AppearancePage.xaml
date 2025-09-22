@@ -1,0 +1,29 @@
+<UserControl x:Class="RadialMenu.Controls.AppearancePage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:RadialMenu.Controls">
+    <StackPanel Margin="10">
+        <TextBlock Text="Appearance" FontSize="16" FontWeight="Bold" />
+        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+            <TextBlock Text="UI Scale" Width="120" VerticalAlignment="Center" />
+            <Slider Width="200" Minimum="0.5" Maximum="2.0" Value="{Binding Working.Appearance.UiScale, Mode=TwoWay}" />
+            <TextBlock Text="{Binding Working.Appearance.UiScale, StringFormat=N2}" Margin="8,0,0,0" VerticalAlignment="Center" />
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+            <TextBlock Text="Inner Radius" Width="120" VerticalAlignment="Center" />
+            <TextBox Width="80" Text="{Binding Working.Appearance.InnerRadius, Mode=TwoWay}" />
+            <TextBlock Text="Outer Radius" Width="120" Margin="20,0,0,0" VerticalAlignment="Center" />
+            <TextBox Width="80" Text="{Binding Working.Appearance.OuterRadius, Mode=TwoWay}" />
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+            <TextBlock Text="Theme" Width="120" VerticalAlignment="Center" />
+            <ComboBox Width="120" SelectedValue="{Binding Working.Appearance.Theme, Mode=TwoWay}">
+                <ComboBoxItem>dark</ComboBoxItem>
+                <ComboBoxItem>light</ComboBoxItem>
+                <ComboBoxItem>system</ComboBoxItem>
+            </ComboBox>
+        </StackPanel>
+    </StackPanel>
+</UserControl>

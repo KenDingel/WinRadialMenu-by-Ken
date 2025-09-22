@@ -1,0 +1,36 @@
+<UserControl x:Class="RadialMenu.Controls.MenuItemProperties"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="300">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="10">
+            <TextBlock Text="Menu Item Properties" FontSize="16" FontWeight="Bold" Margin="0,0,0,10"/>
+            
+            <TextBlock Text="Label" Margin="0,5,0,2"/>
+            <TextBox Text="{Binding SelectedMenuItem.Label, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+
+            <TextBlock Text="Icon (Emoji)" Margin="0,10,0,2"/>
+            <TextBox Text="{Binding SelectedMenuItem.Icon, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+
+            <TextBlock Text="Color" Margin="0,10,0,2"/>
+            <TextBox Text="{Binding SelectedMenuItem.Color, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+
+            <TextBlock Text="Action Type" Margin="0,10,0,2"/>
+            <ComboBox SelectedValue="{Binding SelectedMenuItem.Action, Mode=TwoWay}" ItemsSource="{Binding ActionTypes}" />
+
+            <TextBlock Text="Path/Command" Margin="0,10,0,2"/>
+            <TextBox Text="{Binding SelectedMenuItem.Path, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+
+            <TextBlock Text="Hotkey Override" Margin="0,10,0,2"/>
+            <TextBox Text="(not implemented)" IsEnabled="False" />
+
+            <TextBlock Text="ID" Margin="0,10,0,2"/>
+            <TextBox Text="{Binding SelectedMenuItem.Id, Mode=OneWay}" IsReadOnly="True" />
+
+            <Button Content="Test Action" Margin="0,20,0,0" Command="{Binding TestActionCommand}" />
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

@@ -1,0 +1,115 @@
+<Window x:Class="RadialMenu.Views.SettingsWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="clr-namespace:RadialMenu.Controls"
+    Title="Settings" Height="800" Width="1200" WindowStartupLocation="CenterOwner"
+    Background="{StaticResource BackgroundBrush}"
+    Foreground="{StaticResource TextBrush}">
+    <Window.Resources>
+        <!-- Modern color scheme -->
+        <Color x:Key="AccentColor">#FF2D7DD2</Color>
+        <Color x:Key="BackgroundColor">#E6000000</Color>
+        <Color x:Key="HoverColor">#FF45A5FF</Color>
+        <Color x:Key="TextColor">#FFFFFFFF</Color>
+        
+        <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}"/>
+        <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource BackgroundColor}"/>
+        <SolidColorBrush x:Key="HoverBrush" Color="{StaticResource HoverColor}"/>
+        <SolidColorBrush x:Key="TextBrush" Color="{StaticResource TextColor}"/>
+
+        <!-- Modern button style -->
+        <Style x:Key="ModernButton" TargetType="Button">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="10,5"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="5">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+            <Setter Property="Background" Value="{StaticResource BackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+        <Style TargetType="ComboBox" BasedOn="{StaticResource {x:Type ComboBox}}">
+            <Setter Property="Background" Value="{StaticResource BackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+        <Style TargetType="ComboBoxItem" BasedOn="{StaticResource {x:Type ComboBoxItem}}">
+            <Setter Property="Background" Value="{StaticResource BackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
+        </Style>
+        <Style TargetType="Slider" BasedOn="{StaticResource {x:Type Slider}}">
+            <Setter Property="Foreground" Value="{StaticResource AccentBrush}"/>
+        </Style>
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="220" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="300" />
+        </Grid.ColumnDefinitions>
+
+    <!-- Left navigation -->
+    <StackPanel Grid.Column="0" Background="#111" Margin="8">
+            <TextBlock Text="Settings" Foreground="White" FontSize="18" Margin="6" />
+            <Button x:Name="BtnGeneral" Content="General" Margin="4" Command="{Binding NavigateCommand}" CommandParameter="General" Style="{StaticResource ModernButton}" />
+            <Button x:Name="BtnHotkeys" Content="Hotkeys" Margin="4" Command="{Binding NavigateCommand}" CommandParameter="Hotkeys" Style="{StaticResource ModernButton}" />
+            <Button x:Name="BtnAppearance" Content="Appearance" Margin="4" Command="{Binding NavigateCommand}" CommandParameter="Appearance" Style="{StaticResource ModernButton}" />
+            <Button x:Name="BtnMenu" Content="Menu Builder" Margin="4" Command="{Binding NavigateCommand}" CommandParameter="Menu" Style="{StaticResource ModernButton}" />
+            <Button x:Name="BtnAdvanced" Content="Advanced" Margin="4" Command="{Binding NavigateCommand}" CommandParameter="Advanced" Style="{StaticResource ModernButton}" />
+            <Button x:Name="BtnDiagnostics" Content="Diagnostics" Margin="4" Command="{Binding NavigateCommand}" CommandParameter="Diagnostics" Style="{StaticResource ModernButton}" />
+        </StackPanel>
+
+        <!-- Content area -->
+        <Border Grid.Column="1" Padding="12" Background="{StaticResource BackgroundBrush}">
+            <ContentControl x:Name="ContentHost" />
+        </Border>
+
+        <!-- Right properties / preview -->
+        <Border Grid.Column="2" Padding="12" Background="#141414">
+            <local:MenuItemProperties />
+        </Border>
+
+        <!-- Bottom toolbar -->
+        <DockPanel Grid.Row="1" LastChildFill="False" Margin="12">
+                <StackPanel Orientation="Vertical" DockPanel.Dock="Right">
+                    <StackPanel Orientation="Horizontal">
+                        <Button Content="Undo" Margin="4" Command="{Binding UndoCommand}" IsEnabled="{Binding CanUndo}" Style="{StaticResource ModernButton}" />
+                        <Button Content="Redo" Margin="4" Command="{Binding RedoCommand}" IsEnabled="{Binding CanRedo}" Style="{StaticResource ModernButton}" />
+                        <Button x:Name="BtnImport" Content="Import" Margin="4" Style="{StaticResource ModernButton}" Command="{Binding ImportCommand}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal">
+                        <Button x:Name="BtnExport" Content="Export" Margin="4" Style="{StaticResource ModernButton}" Command="{Binding ExportCommand}" />
+                        <Button Content="Cancel" Margin="4" Width="90" Command="{Binding CancelCommand}" Style="{StaticResource ModernButton}" />
+                        <Button x:Name="BtnSave" Content="Save" Margin="4" Width="90" Command="{Binding SaveCommand}" IsEnabled="{Binding IsDirty}" Style="{StaticResource ModernButton}" />
+                    </StackPanel>
+                </StackPanel>
+        </DockPanel>
+    </Grid>
+</Window>
