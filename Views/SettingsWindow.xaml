@@ -114,50 +114,5 @@
                 </StackPanel>
             </DockPanel>
         </Grid>
-
-        <!-- Corrected visibility binding for the Menu Item Properties panel -->
-        <StackPanel x:Name="MenuItemPropertiesPanel" Visibility="{Binding IsMenuBuilderPageVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <!-- Menu Item Properties content -->
-
-            <!-- Color Selection Grid -->
-            <TextBlock Text="Select Color" FontWeight="Bold" FontSize="14" Margin="0,8,0,4" />
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-                <Button Background="Red" Width="40" Height="40" Grid.Row="0" Grid.Column="0" Command="{Binding SelectColorCommand}" CommandParameter="Red" />
-                <Button Background="Green" Width="40" Height="40" Grid.Row="0" Grid.Column="1" Command="{Binding SelectColorCommand}" CommandParameter="Green" />
-                <Button Background="Blue" Width="40" Height="40" Grid.Row="0" Grid.Column="2" Command="{Binding SelectColorCommand}" CommandParameter="Blue" />
-                <Button Background="Yellow" Width="40" Height="40" Grid.Row="1" Grid.Column="0" Command="{Binding SelectColorCommand}" CommandParameter="Yellow" />
-                <Button Background="Purple" Width="40" Height="40" Grid.Row="1" Grid.Column="1" Command="{Binding SelectColorCommand}" CommandParameter="Purple" />
-                <Button Background="Orange" Width="40" Height="40" Grid.Row="1" Grid.Column="2" Command="{Binding SelectColorCommand}" CommandParameter="Orange" />
-            </Grid>
-
-            <!-- Emoji Selection Grid -->
-            <TextBlock Text="Select Emoji" FontWeight="Bold" FontSize="14" Margin="0,8,0,4" />
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-                <Button Content="😀" Width="40" Height="40" Grid.Row="0" Grid.Column="0" Command="{Binding SelectEmojiCommand}" CommandParameter="😀" />
-                <Button Content="🎉" Width="40" Height="40" Grid.Row="0" Grid.Column="1" Command="{Binding SelectEmojiCommand}" CommandParameter="🎉" />
-                <Button Content="🔥" Width="40" Height="40" Grid.Row="0" Grid.Column="2" Command="{Binding SelectEmojiCommand}" CommandParameter="🔥" />
-                <Button Content="🌟" Width="40" Height="40" Grid.Row="1" Grid.Column="0" Command="{Binding SelectEmojiCommand}" CommandParameter="🌟" />
-                <Button Content="💡" Width="40" Height="40" Grid.Row="1" Grid.Column="1" Command="{Binding SelectEmojiCommand}" CommandParameter="💡" />
-                <Button Content="🚀" Width="40" Height="40" Grid.Row="1" Grid.Column="2" Command="{Binding SelectEmojiCommand}" CommandParameter="🚀" />
-            </Grid>
-        </StackPanel>
     </DockPanel>
 </Window>
