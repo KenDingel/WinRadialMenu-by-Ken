@@ -96,10 +96,13 @@ namespace RadialMenu
                 Background = Brushes.Transparent
             };
 
+            // Create spinning vortex background
+            CreateVortexBackground();
+
             // Add blur effect to background
             var blurEffect = new BlurEffect { Radius = 10 };
             
-            // Center circle (dead zone) - cyberpunk style
+            // Center circle (dead zone) - dark matter portal style
             var centerGradient = new RadialGradientBrush
             {
                 Center = new Point(0.3, 0.3),
@@ -108,9 +111,10 @@ namespace RadialMenu
                 RadiusY = 0.8,
                 GradientStops = new GradientStopCollection
                 {
-                    new GradientStop(Color.FromArgb(220, 0, 255, 255), 0), // Cyan center
-                    new GradientStop(Color.FromArgb(180, 0, 100, 200), 0.5), // Darker blue
-                    new GradientStop(Color.FromArgb(150, 0, 50, 150), 1) // Dark edge
+                    new GradientStop(Color.FromArgb(220, 25, 25, 112), 0),     // Deep midnight blue center
+                    new GradientStop(Color.FromArgb(180, 138, 43, 226), 0.3),  // Purple mid
+                    new GradientStop(Color.FromArgb(150, 75, 0, 130), 0.7),    // Dark purple
+                    new GradientStop(Color.FromArgb(100, 0, 0, 0), 1)          // Black edge
                 }
             };
 
@@ -119,40 +123,33 @@ namespace RadialMenu
                 Width = (_innerRadius * 2) * _uiScale,
                 Height = (_innerRadius * 2) * _uiScale,
                 Fill = centerGradient,
-                Stroke = new SolidColorBrush(Color.FromArgb(255, 0, 255, 255)), // Cyan stroke
-                StrokeThickness = 3 * _uiScale
+                Stroke = new SolidColorBrush(Color.FromArgb(200, 138, 43, 226)), // Purple stroke
+                StrokeThickness = 2 * _uiScale
             };
 
-            // Add cyberpunk glow to center circle
-            var centerGlow = new DropShadowEffect
+            // Create deep shadow effect for inset appearance and portal depth
+            var portalEffect = new DropShadowEffect
             {
-                Color = Color.FromRgb(0, 255, 255),
+                Color = Color.FromRgb(138, 43, 226),
                 BlurRadius = 25,
                 ShadowDepth = 0,
-                Opacity = 0.7
+                Opacity = 0.8
             };
             
-            // Add drop shadow for depth
-            var centerDropShadow = new DropShadowEffect
-            {
-                Color = Colors.Black,
-                BlurRadius = 15,
-                ShadowDepth = 5,
-                Opacity = 0.6,
-                Direction = 315
-            };
-            
-            _centerCircle.Effect = centerGlow;
+            _centerCircle.Effect = portalEffect;
 
             Canvas.SetLeft(_centerCircle, (Width / 2) - (_centerCircle.Width / 2));
             Canvas.SetTop(_centerCircle, (Height / 2) - (_centerCircle.Height / 2));
             _canvas.Children.Add(_centerCircle);
 
-            // Center text (shows current level or "MENU") - cyberpunk style
+            // Add portal depth layers
+            CreatePortalDepthLayers();
+
+            // Center text (shows current level or "MENU") - dark matter style
             _centerText = new TextBlock
             {
-                Text = "RADIAL MENU",
-                Foreground = new SolidColorBrush(Color.FromRgb(0, 255, 255)), // Cyan text
+                Text = "PORTAL",
+                Foreground = new SolidColorBrush(Color.FromRgb(220, 208, 255)), // Light purple text
                 FontSize = 12 * _uiScale,
                 FontWeight = FontWeights.Bold,
                 FontFamily = new FontFamily("Segoe UI"), // Modern font
@@ -160,24 +157,24 @@ namespace RadialMenu
                 TextWrapping = TextWrapping.Wrap
             };
 
-            // Add glow effect to center text
+            // Add enhanced glow effect to center text
             _centerText.Effect = new DropShadowEffect
             {
-                Color = Color.FromRgb(0, 255, 255),
-                BlurRadius = 8,
+                Color = Color.FromRgb(138, 43, 226),
+                BlurRadius = 12,
                 ShadowDepth = 0,
-                Opacity = 0.7
+                Opacity = 0.9
             };
 
-            // Add a subtle rotating ring around the center for visual interest
+            // Add a rotating portal ring around the center for visual depth
             var centerRing = new Ellipse
             {
                 Width = (_innerRadius * 2) * _uiScale + 20,
                 Height = (_innerRadius * 2) * _uiScale + 20,
                 Fill = Brushes.Transparent,
-                Stroke = new SolidColorBrush(Color.FromArgb(100, 0, 255, 255)),
-                StrokeThickness = 1,
-                StrokeDashArray = new DoubleCollection { 5, 5 }
+                Stroke = new SolidColorBrush(Color.FromArgb(120, 138, 43, 226)),
+                StrokeThickness = 2,
+                StrokeDashArray = new DoubleCollection { 8, 4 }
             };
 
             Canvas.SetLeft(centerRing, _centerPoint.X - centerRing.Width / 2);
@@ -185,10 +182,10 @@ namespace RadialMenu
 
             centerRing.Effect = new DropShadowEffect
             {
-                Color = Color.FromRgb(0, 255, 255),
-                BlurRadius = 5,
+                Color = Color.FromRgb(138, 43, 226),
+                BlurRadius = 8,
                 ShadowDepth = 0,
-                Opacity = 0.4
+                Opacity = 0.6
             };
 
             _canvas.Children.Add(centerRing);
@@ -321,8 +318,8 @@ namespace RadialMenu
                     var itemsToLoad = _config?.Items ?? new List<ConfigItem>();
                     var created = LoadMenuItems(itemsToLoad, null);
                     _menuStack.Clear();
-                    _menuStack.Push(new MenuLevel { Items = itemsToLoad, Name = "MENU", CreatedNodes = created, Origin = null });
-                    _centerText.Text = "MENU";
+                    _menuStack.Push(new MenuLevel { Items = itemsToLoad, Name = "PORTAL", CreatedNodes = created, Origin = null });
+                    _centerText.Text = "PORTAL";
                     PositionCenterElements();
                 }
                 catch { }
@@ -449,8 +446,8 @@ namespace RadialMenu
             var itemsToLoad = _config?.Items ?? new List<ConfigItem>();
             var created = LoadMenuItems(itemsToLoad, null);
             Log($"LoadMenuItems returned {created?.Count ?? 0} created nodes.");
-            _menuStack.Push(new MenuLevel { Items = itemsToLoad, Name = "MENU", CreatedNodes = created, Origin = null });
-            _centerText.Text = "MENU";
+            _menuStack.Push(new MenuLevel { Items = itemsToLoad, Name = "PORTAL", CreatedNodes = created, Origin = null });
+            _centerText.Text = "PORTAL";
 
             // Re-center center text after text change
             PositionCenterElements();
@@ -494,43 +491,73 @@ namespace RadialMenu
                 var targetX = _centerPoint.X + Math.Cos(angleRad) * spreadRadius;
                 var targetY = _centerPoint.Y + Math.Sin(angleRad) * spreadRadius;
 
-                // Parse color and create cyberpunk variant
+                // Parse color and create dark matter variant
                 Color baseColor;
                 try
                 {
-                    baseColor = (Color)ColorConverter.ConvertFromString(config.Color ?? "#FF2D7DD2");
+                    baseColor = (Color)ColorConverter.ConvertFromString(config.Color ?? "#FF483D8B");
                 }
                 catch
                 {
-                    baseColor = Color.FromRgb(45, 125, 210);
+                    baseColor = Color.FromRgb(72, 61, 139); // Dark slate blue
                 }
 
-                // Create cyberpunk neon color variants
-                var neonColor = CreateNeonVariant(baseColor);
-                var accentColor = CreateAccentVariant(baseColor);
+                // Create dark matter neon color variants
+                var cosmicColor = CreateCosmicVariant(baseColor);
+                var voidColor = CreateVoidVariant(baseColor);
 
-                // Create gradient background for glassmorphism effect
-                var gradientBrush = new LinearGradientBrush
+                // Create dark matter gradient background
+                var gradientBrush = new RadialGradientBrush
                 {
-                    StartPoint = new Point(0, 0),
-                    EndPoint = new Point(1, 1),
+                    Center = new Point(0.3, 0.3),
+                    GradientOrigin = new Point(0.3, 0.3),
+                    RadiusX = 0.9,
+                    RadiusY = 0.9,
                     GradientStops = new GradientStopCollection
                     {
-                        new GradientStop(Color.FromArgb(180, neonColor.R, neonColor.G, neonColor.B), 0),
-                        new GradientStop(Color.FromArgb(120, accentColor.R, accentColor.G, accentColor.B), 0.5),
-                        new GradientStop(Color.FromArgb(200, neonColor.R, neonColor.G, neonColor.B), 1)
+                        new GradientStop(Color.FromArgb(200, cosmicColor.R, cosmicColor.G, cosmicColor.B), 0),
+                        new GradientStop(Color.FromArgb(120, voidColor.R, voidColor.G, voidColor.B), 0.6),
+                        new GradientStop(Color.FromArgb(180, 25, 25, 112), 1) // Dark void edge
                     }
                 };
 
-                // Create circular visual with glassmorphism
+                // Create circular visual with dark matter effects and animated border glow
                 var ellipse = new Ellipse
                 {
                     Width = nodeSize,
                     Height = nodeSize,
                     Fill = gradientBrush,
-                    Stroke = new SolidColorBrush(Color.FromArgb(255, 255, 255, 255)), // White neon stroke
-                    StrokeThickness = config.Submenu != null && config.Submenu.Count > 0 ? 2.5 : 1.5 // Thicker stroke for submenu items
+                    StrokeThickness = config.Submenu != null && config.Submenu.Count > 0 ? 3 : 2 // Thicker stroke for submenu items
                 };
+
+                // Create animated gradient stroke
+                var gradientStroke = new LinearGradientBrush
+                {
+                    StartPoint = new Point(0, 0),
+                    EndPoint = new Point(1, 1),
+                    GradientStops = new GradientStopCollection
+                    {
+                        new GradientStop(Color.FromArgb(255, 138, 43, 226), 0),
+                        new GradientStop(Color.FromArgb(200, cosmicColor.R, cosmicColor.G, cosmicColor.B), 0.5),
+                        new GradientStop(Color.FromArgb(255, 75, 0, 130), 1)
+                    }
+                };
+
+                ellipse.Stroke = gradientStroke;
+
+                // Add animated gradient rotation
+                var gradientRotateTransform = new RotateTransform(0, 0.5, 0.5);
+                gradientStroke.RelativeTransform = gradientRotateTransform;
+
+                var gradientRotationAnimation = new DoubleAnimation
+                {
+                    From = 0,
+                    To = 360,
+                    Duration = TimeSpan.FromSeconds(8),
+                    RepeatBehavior = RepeatBehavior.Forever
+                };
+
+                gradientRotateTransform.BeginAnimation(RotateTransform.AngleProperty, gradientRotationAnimation);
 
                 // Add submenu indicator ring for items with children
                 Ellipse? submenuRing = null;
@@ -541,9 +568,9 @@ namespace RadialMenu
                         Width = nodeSize + 8,
                         Height = nodeSize + 8,
                         Fill = Brushes.Transparent,
-                        Stroke = new SolidColorBrush(Color.FromArgb(150, neonColor.R, neonColor.G, neonColor.B)),
+                        Stroke = new SolidColorBrush(Color.FromArgb(150, cosmicColor.R, cosmicColor.G, cosmicColor.B)),
                         StrokeThickness = 1,
-                        StrokeDashArray = new DoubleCollection { 2, 2 } // Dashed line
+                        StrokeDashArray = new DoubleCollection { 3, 3 } // Cosmic dashed line
                     };
 
                     Canvas.SetLeft(submenuRing, targetX - (nodeSize + 8) / 2);
@@ -551,10 +578,10 @@ namespace RadialMenu
 
                     submenuRing.Effect = new DropShadowEffect
                     {
-                        Color = neonColor,
-                        BlurRadius = 3,
+                        Color = cosmicColor,
+                        BlurRadius = 4,
                         ShadowDepth = 0,
-                        Opacity = 0.3
+                        Opacity = 0.5
                     };
 
                     _canvas.Children.Add(submenuRing);
@@ -572,12 +599,23 @@ namespace RadialMenu
                 ellipse.RenderTransform = tg;
                 ellipse.RenderTransformOrigin = new Point(0.5, 0.5);
 
-                // Add subtle pulsing animation to indicate interactivity
+                // Add subtle floating and pulsing animation to indicate interactivity
                 var pulseAnimation = new DoubleAnimation
                 {
                     From = 1.0,
-                    To = 1.03,
-                    Duration = TimeSpan.FromSeconds(3),
+                    To = 1.08,
+                    Duration = TimeSpan.FromSeconds(3.5),
+                    AutoReverse = true,
+                    RepeatBehavior = RepeatBehavior.Forever,
+                    EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
+                };
+
+                // Create floating animation
+                var floatAnimation = new DoubleAnimation
+                {
+                    From = 0,
+                    To = 6,
+                    Duration = TimeSpan.FromSeconds(4 + (i * 0.3)), // Stagger timing
                     AutoReverse = true,
                     RepeatBehavior = RepeatBehavior.Forever,
                     EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
@@ -585,40 +623,46 @@ namespace RadialMenu
 
                 // Create a subtle scale transform for pulsing (separate from main transform)
                 var pulseScale = new ScaleTransform(1.0, 1.0);
-                var pulseGroup = new TransformGroup();
-                pulseGroup.Children.Add(tg);
-                pulseGroup.Children.Add(pulseScale);
-                ellipse.RenderTransform = pulseGroup;
+                var floatTranslate = new TranslateTransform(0, 0);
+                var floatGroup = new TransformGroup();
+                floatGroup.Children.Add(tg);
+                floatGroup.Children.Add(pulseScale);
+                floatGroup.Children.Add(floatTranslate);
+                ellipse.RenderTransform = floatGroup;
 
-                // Start pulsing after initial animation completes
-                var pulseTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
-                pulseTimer.Tick += (s, e) => {
+                // Start floating and pulsing after initial animation completes
+                var animationTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
+                animationTimer.Tick += (s, e) => {
                     pulseScale.BeginAnimation(ScaleTransform.ScaleXProperty, pulseAnimation);
                     pulseScale.BeginAnimation(ScaleTransform.ScaleYProperty, pulseAnimation);
-                    pulseTimer.Stop();
+                    floatTranslate.BeginAnimation(TranslateTransform.YProperty, floatAnimation);
+                    animationTimer.Stop();
                 };
-                pulseTimer.Start();
+                animationTimer.Start();
 
-                // Add multi-layer neon glow effect with drop shadow
-                var glowEffect = new DropShadowEffect 
+                // Add enhanced portal glow effect with pulsating animation
+                var portalGlow = new DropShadowEffect 
                 { 
-                    Color = neonColor, 
-                    BlurRadius = 15, 
+                    Color = cosmicColor, 
+                    BlurRadius = 18, 
                     ShadowDepth = 0, 
-                    Opacity = 0.3 
+                    Opacity = 0.6 
                 };
-                
-                // Add drop shadow for depth
-                var dropShadow = new DropShadowEffect
+
+                ellipse.Effect = portalGlow;
+
+                // Add pulsating glow animation
+                var glowPulseAnimation = new DoubleAnimation
                 {
-                    Color = Colors.Black,
-                    BlurRadius = 10,
-                    ShadowDepth = 4,
-                    Opacity = 0.5,
-                    Direction = 315
+                    From = 0.4,
+                    To = 0.9,
+                    Duration = TimeSpan.FromSeconds(2.5),
+                    AutoReverse = true,
+                    RepeatBehavior = RepeatBehavior.Forever,
+                    EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
                 };
-                
-                ellipse.Effect = glowEffect;
+
+                portalGlow.BeginAnimation(DropShadowEffect.OpacityProperty, glowPulseAnimation);
 
                 _canvas.Children.Add(ellipse);
                 // Ensure nodes render above center circle
@@ -631,18 +675,18 @@ namespace RadialMenu
                     Y1 = _centerPoint.Y,
                     X2 = _centerPoint.X, // Start at center, will animate to target
                     Y2 = _centerPoint.Y,
-                    Stroke = new SolidColorBrush(Color.FromArgb(180, neonColor.R, neonColor.G, neonColor.B)),
+                    Stroke = new SolidColorBrush(Color.FromArgb(180, cosmicColor.R, cosmicColor.G, cosmicColor.B)),
                     StrokeThickness = 2 * _uiScale,
                     Opacity = 0.8
                 };
 
-                // Add subtle glow to connector lines
+                // Add cosmic glow to connector lines
                 connectorLine.Effect = new DropShadowEffect
                 {
-                    Color = neonColor,
-                    BlurRadius = 4,
+                    Color = cosmicColor,
+                    BlurRadius = 6,
                     ShadowDepth = 0,
-                    Opacity = 0.4
+                    Opacity = 0.5
                 };
 
                 _canvas.Children.Add(connectorLine);
@@ -658,8 +702,8 @@ namespace RadialMenu
                         new Point(arrowSize/2, 0),
                         new Point(-arrowSize/2, arrowSize/2)
                     },
-                    Fill = new SolidColorBrush(Color.FromArgb(200, neonColor.R, neonColor.G, neonColor.B)),
-                    Stroke = new SolidColorBrush(Color.FromArgb(255, 255, 255, 255)),
+                    Fill = new SolidColorBrush(Color.FromArgb(200, cosmicColor.R, cosmicColor.G, cosmicColor.B)),
+                    Stroke = new SolidColorBrush(Color.FromArgb(255, 138, 43, 226)),
                     StrokeThickness = 1,
                     Opacity = 0.9
                 };
@@ -672,13 +716,13 @@ namespace RadialMenu
                 var angleToCenter = Math.Atan2(targetY - _centerPoint.Y, targetX - _centerPoint.X) * 180 / Math.PI;
                 arrow.RenderTransform = new RotateTransform(angleToCenter + 90, arrowSize/2, arrowSize/2);
 
-                // Add glow to arrow
+                // Add cosmic glow to arrow
                 arrow.Effect = new DropShadowEffect
                 {
-                    Color = neonColor,
-                    BlurRadius = 3,
+                    Color = cosmicColor,
+                    BlurRadius = 4,
                     ShadowDepth = 0,
-                    Opacity = 0.5
+                    Opacity = 0.6
                 };
 
                 _canvas.Children.Add(arrow);
@@ -804,25 +848,27 @@ namespace RadialMenu
                 var targetX = targets[i].X;
                 var targetY = targets[i].Y;
 
-                // Parse color and create cyberpunk variant
+                // Parse color and create dark matter variant
                 Color baseColor;
-                try { baseColor = (Color)ColorConverter.ConvertFromString(cfg.Color ?? "#FF2D7DD2"); }
-                catch { baseColor = Color.FromRgb(45, 125, 210); }
+                try { baseColor = (Color)ColorConverter.ConvertFromString(cfg.Color ?? "#FF483D8B"); }
+                catch { baseColor = Color.FromRgb(72, 61, 139); }
 
-                // Create cyberpunk neon color variants
-                var neonColor = CreateNeonVariant(baseColor);
-                var accentColor = CreateAccentVariant(baseColor);
+                // Create dark matter color variants
+                var cosmicColor = CreateCosmicVariant(baseColor);
+                var voidColor = CreateVoidVariant(baseColor);
 
-                // Create gradient background for glassmorphism effect
-                var gradientBrush = new LinearGradientBrush
+                // Create dark matter gradient background
+                var gradientBrush = new RadialGradientBrush
                 {
-                    StartPoint = new Point(0, 0),
-                    EndPoint = new Point(1, 1),
+                    Center = new Point(0.3, 0.3),
+                    GradientOrigin = new Point(0.3, 0.3),
+                    RadiusX = 0.9,
+                    RadiusY = 0.9,
                     GradientStops = new GradientStopCollection
                     {
-                        new GradientStop(Color.FromArgb(180, neonColor.R, neonColor.G, neonColor.B), 0),
-                        new GradientStop(Color.FromArgb(120, accentColor.R, accentColor.G, accentColor.B), 0.5),
-                        new GradientStop(Color.FromArgb(200, neonColor.R, neonColor.G, neonColor.B), 1)
+                        new GradientStop(Color.FromArgb(180, cosmicColor.R, cosmicColor.G, cosmicColor.B), 0),
+                        new GradientStop(Color.FromArgb(120, voidColor.R, voidColor.G, voidColor.B), 0.6),
+                        new GradientStop(Color.FromArgb(200, 25, 25, 112), 1)
                     }
                 };
 
@@ -832,32 +878,21 @@ namespace RadialMenu
                     Width = nodeSize,
                     Height = nodeSize,
                     Fill = gradientBrush,
-                    Stroke = new SolidColorBrush(Color.FromArgb(255, 255, 255, 255)), // White neon stroke
-                    StrokeThickness = 1.5
+                    Stroke = new SolidColorBrush(Color.FromArgb(200, 138, 43, 226)), // Purple void stroke
+                    StrokeThickness = 2
                 };
                 Canvas.SetLeft(ellipse, parent.Center.X - nodeSize / 2);
                 Canvas.SetTop(ellipse, parent.Center.Y - nodeSize / 2);
 
-                // Add multi-layer neon glow effect with drop shadow
+                // Add portal glow effect for submenu items
                 var glowEffect = new DropShadowEffect 
                 { 
-                    Color = neonColor, 
+                    Color = cosmicColor, 
                     BlurRadius = 15, 
                     ShadowDepth = 0, 
-                    Opacity = 0.3 
+                    Opacity = 0.5 
                 };
                 
-                // Add drop shadow for depth
-                var dropShadow = new DropShadowEffect
-                {
-                    Color = Colors.Black,
-                    BlurRadius = 8,
-                    ShadowDepth = 3,
-                    Opacity = 0.4,
-                    Direction = 315 // 45 degrees for natural lighting
-                };
-                
-                // Use glow as primary effect, drop shadow as secondary
                 ellipse.Effect = glowEffect;
 
                 _canvas.Children.Add(ellipse);
@@ -871,15 +906,15 @@ namespace RadialMenu
                     Y1 = parent.Center.Y,
                     X2 = parent.Center.X,
                     Y2 = parent.Center.Y,
-                    Stroke = new SolidColorBrush(Color.FromArgb(200, neonColor.R, neonColor.G, neonColor.B)),
+                    Stroke = new SolidColorBrush(Color.FromArgb(200, cosmicColor.R, cosmicColor.G, cosmicColor.B)),
                     StrokeThickness = 2.5 * _uiScale,
                     Opacity = 0.9
                 };
                 
-                // Add glow to connector lines
+                // Add cosmic glow to connector lines
                 line.Effect = new DropShadowEffect
                 {
-                    Color = neonColor,
+                    Color = cosmicColor,
                     BlurRadius = 6,
                     ShadowDepth = 0,
                     Opacity = 0.6
@@ -1356,10 +1391,10 @@ namespace RadialMenu
                 var offsetY = targetY - item.Center.Y;
 
                 // Animate ellipse
-                var pulseGroup = item.Visual.RenderTransform as TransformGroup;
-                if (pulseGroup != null && pulseGroup.Children.Count >= 1)
+                var floatGroup = item.Visual.RenderTransform as TransformGroup;
+                if (floatGroup != null && floatGroup.Children.Count >= 1)
                 {
-                    var tg = pulseGroup.Children[0] as TransformGroup;
+                    var tg = floatGroup.Children[0] as TransformGroup;
                     if (tg != null && tg.Children.Count >= 2)
                     {
                         var scale = tg.Children[0] as ScaleTransform;
@@ -1532,24 +1567,274 @@ namespace RadialMenu
             return new Point(extraLeft, extraTop);
         }
 
-        // Cyberpunk styling helper methods
+        // Create portal depth layers for dimensional effect
+        private void CreatePortalDepthLayers()
+        {
+            var centerX = _canvas.Width / 2;
+            var centerY = _canvas.Height / 2;
+
+            // Create multiple concentric circles for depth illusion
+            for (int layer = 0; layer < 5; layer++)
+            {
+                var radius = (_innerRadius + (layer * 8)) * _uiScale;
+                var depthCircle = new Ellipse
+                {
+                    Width = radius * 2,
+                    Height = radius * 2,
+                    Fill = Brushes.Transparent,
+                    Stroke = new SolidColorBrush(Color.FromArgb(
+                        (byte)(40 - layer * 6), // Decreasing opacity
+                        (byte)(138 - layer * 20),
+                        (byte)(43 - layer * 8),
+                        (byte)(226 - layer * 30)
+                    )),
+                    StrokeThickness = 1,
+                    StrokeDashArray = new DoubleCollection { 1, 3 }
+                };
+
+                Canvas.SetLeft(depthCircle, centerX - radius);
+                Canvas.SetTop(depthCircle, centerY - radius);
+
+                // Add subtle glow
+                depthCircle.Effect = new DropShadowEffect
+                {
+                    Color = Color.FromArgb(80, 138, 43, 226),
+                    BlurRadius = 2,
+                    ShadowDepth = 0,
+                    Opacity = 0.3
+                };
+
+                _canvas.Children.Add(depthCircle);
+                Panel.SetZIndex(depthCircle, -5 + layer);
+
+                // Add slow counter-rotation for hypnotic effect
+                var rotateTransform = new RotateTransform(0, radius, radius);
+                depthCircle.RenderTransform = rotateTransform;
+
+                var rotationAnimation = new DoubleAnimation
+                {
+                    From = 0,
+                    To = layer % 2 == 0 ? 360 : -360, // Alternate directions
+                    Duration = TimeSpan.FromSeconds(25 + (layer * 8)),
+                    RepeatBehavior = RepeatBehavior.Forever
+                };
+
+                rotateTransform.BeginAnimation(RotateTransform.AngleProperty, rotationAnimation);
+            }
+
+            // Add central void effect
+            var voidCore = new Ellipse
+            {
+                Width = (_innerRadius * 0.6) * _uiScale,
+                Height = (_innerRadius * 0.6) * _uiScale,
+                Fill = new RadialGradientBrush
+                {
+                    GradientStops = new GradientStopCollection
+                    {
+                        new GradientStop(Color.FromArgb(255, 0, 0, 0), 0),
+                        new GradientStop(Color.FromArgb(180, 25, 25, 112), 0.8),
+                        new GradientStop(Color.FromArgb(100, 138, 43, 226), 1)
+                    }
+                }
+            };
+
+            Canvas.SetLeft(voidCore, centerX - (voidCore.Width / 2));
+            Canvas.SetTop(voidCore, centerY - (voidCore.Height / 2));
+
+            voidCore.Effect = new DropShadowEffect
+            {
+                Color = Colors.Black,
+                BlurRadius = 15,
+                ShadowDepth = 0,
+                Opacity = 0.9
+            };
+
+            _canvas.Children.Add(voidCore);
+            Panel.SetZIndex(voidCore, 1);
+        }
+
+        // Create animated vortex background
+        private void CreateVortexBackground()
+        {
+            var centerX = _canvas.Width / 2;
+            var centerY = _canvas.Height / 2;
+
+            // Create multiple spiral layers for depth
+            for (int layer = 0; layer < 3; layer++)
+            {
+                var spiralPath = new System.Windows.Shapes.Path();
+                var pathGeometry = new PathGeometry();
+                var pathFigure = new PathFigure();
+                
+                var radius = 300 + (layer * 100);
+                var spiralTurns = 4;
+                var pointsPerTurn = 50;
+                var totalPoints = spiralTurns * pointsPerTurn;
+                
+                pathFigure.StartPoint = new Point(centerX, centerY);
+                
+                for (int i = 0; i <= totalPoints; i++)
+                {
+                    var angle = (double)i / pointsPerTurn * 2 * Math.PI;
+                    var currentRadius = (double)i / totalPoints * radius;
+                    var x = centerX + Math.Cos(angle) * currentRadius;
+                    var y = centerY + Math.Sin(angle) * currentRadius;
+                    
+                    var lineSegment = new LineSegment(new Point(x, y), true);
+                    pathFigure.Segments.Add(lineSegment);
+                }
+                
+                pathGeometry.Figures.Add(pathFigure);
+                spiralPath.Data = pathGeometry;
+                
+                // Create gradient stroke for the spiral
+                var gradientBrush = new LinearGradientBrush
+                {
+                    StartPoint = new Point(0, 0),
+                    EndPoint = new Point(1, 1),
+                    GradientStops = new GradientStopCollection
+                    {
+                        new GradientStop(Color.FromArgb(120, 138, 43, 226), 0),    // Deep purple
+                        new GradientStop(Color.FromArgb(80, 75, 0, 130), 0.5),     // Dark purple
+                        new GradientStop(Color.FromArgb(150, 25, 25, 112), 1)      // Midnight blue
+                    }
+                };
+                
+                spiralPath.Stroke = gradientBrush;
+                spiralPath.StrokeThickness = 2 - (layer * 0.5);
+                spiralPath.Opacity = 0.6 - (layer * 0.15);
+                
+                // Add glow effect
+                spiralPath.Effect = new DropShadowEffect
+                {
+                    Color = Color.FromRgb(138, 43, 226),
+                    BlurRadius = 8,
+                    ShadowDepth = 0,
+                    Opacity = 0.4
+                };
+                
+                _canvas.Children.Add(spiralPath);
+                Panel.SetZIndex(spiralPath, -10 + layer);
+                
+                // Add rotation animation
+                var rotateTransform = new RotateTransform(0, centerX, centerY);
+                spiralPath.RenderTransform = rotateTransform;
+                
+                var rotationAnimation = new DoubleAnimation
+                {
+                    From = 0,
+                    To = 360,
+                    Duration = TimeSpan.FromSeconds(30 + (layer * 10)), // Different speeds for layers
+                    RepeatBehavior = RepeatBehavior.Forever
+                };
+                
+                rotateTransform.BeginAnimation(RotateTransform.AngleProperty, rotationAnimation);
+            }
+            
+            // Add particle effect background
+            CreateParticleField();
+        }
+
+        // Create floating particle field for cosmic effect
+        private void CreateParticleField()
+        {
+            var random = new Random();
+            var centerX = _canvas.Width / 2;
+            var centerY = _canvas.Height / 2;
+            
+            for (int i = 0; i < 30; i++)
+            {
+                var particle = new Ellipse
+                {
+                    Width = 2 + random.NextDouble() * 4,
+                    Height = 2 + random.NextDouble() * 4,
+                    Fill = new SolidColorBrush(Color.FromArgb(
+                        (byte)(50 + random.Next(100)),
+                        (byte)(100 + random.Next(155)),
+                        (byte)(50 + random.Next(100)),
+                        (byte)(150 + random.Next(105))
+                    ))
+                };
+                
+                // Position randomly around the canvas
+                var angle = random.NextDouble() * 2 * Math.PI;
+                var distance = random.NextDouble() * 400;
+                var x = centerX + Math.Cos(angle) * distance;
+                var y = centerY + Math.Sin(angle) * distance;
+                
+                Canvas.SetLeft(particle, x);
+                Canvas.SetTop(particle, y);
+                
+                // Add subtle glow
+                particle.Effect = new DropShadowEffect
+                {
+                    Color = Color.FromArgb(100, 200, 150, 255),
+                    BlurRadius = 3,
+                    ShadowDepth = 0,
+                    Opacity = 0.6
+                };
+                
+                _canvas.Children.Add(particle);
+                Panel.SetZIndex(particle, -15);
+                
+                // Add floating animation
+                var floatTransform = new TranslateTransform();
+                particle.RenderTransform = floatTransform;
+                
+                var floatAnimation = new DoubleAnimation
+                {
+                    From = 0,
+                    To = random.Next(-20, 20),
+                    Duration = TimeSpan.FromSeconds(4 + random.NextDouble() * 6),
+                    AutoReverse = true,
+                    RepeatBehavior = RepeatBehavior.Forever,
+                    EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
+                };
+                
+                var floatAnimationY = new DoubleAnimation
+                {
+                    From = 0,
+                    To = random.Next(-15, 15),
+                    Duration = TimeSpan.FromSeconds(3 + random.NextDouble() * 4),
+                    AutoReverse = true,
+                    RepeatBehavior = RepeatBehavior.Forever,
+                    EasingFunction = new SineEase { EasingMode = EasingMode.EaseInOut }
+                };
+                
+                floatTransform.BeginAnimation(TranslateTransform.XProperty, floatAnimation);
+                floatTransform.BeginAnimation(TranslateTransform.YProperty, floatAnimationY);
+            }
+        }
+
+        // Dark matter styling helper methods
+        private static Color CreateCosmicVariant(Color baseColor)
+        {
+            // Create cosmic/stellar color variant
+            var hsl = RgbToHsl(baseColor);
+            hsl.H = (hsl.H + 60) % 360; // Shift hue for cosmic effect
+            hsl.S = Math.Min(1.0, hsl.S * 1.4); // Increase saturation
+            hsl.L = Math.Min(0.8, hsl.L * 1.3); // Increase lightness but keep cosmic
+            return HslToRgb(hsl);
+        }
+
+        private static Color CreateVoidVariant(Color baseColor)
+        {
+            // Create dark void color variant
+            var hsl = RgbToHsl(baseColor);
+            hsl.S = Math.Max(0.2, hsl.S * 0.6); // Reduce saturation
+            hsl.L = Math.Max(0.1, hsl.L * 0.4); // Make much darker
+            return HslToRgb(hsl);
+        }
+
+        // Legacy color methods for backward compatibility
         private static Color CreateNeonVariant(Color baseColor)
         {
-            // Boost saturation and brightness for neon effect
-            var hsl = RgbToHsl(baseColor);
-            hsl.S = Math.Min(1.0, hsl.S * 1.3); // Increase saturation
-            hsl.L = Math.Min(1.0, hsl.L * 1.2); // Increase lightness
-            return HslToRgb(hsl);
+            return CreateCosmicVariant(baseColor);
         }
 
         private static Color CreateAccentVariant(Color baseColor)
         {
-            // Create complementary accent color
-            var hsl = RgbToHsl(baseColor);
-            hsl.H = (hsl.H + 180) % 360; // Complementary hue
-            hsl.S = Math.Min(1.0, hsl.S * 0.8);
-            hsl.L = Math.Min(1.0, hsl.L * 1.1);
-            return HslToRgb(hsl);
+            return CreateVoidVariant(baseColor);
         }
 
         private struct HslColor
