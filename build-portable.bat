@@ -48,12 +48,3 @@ if errorlevel 1 (
 
 echo.
 echo Build successful!
-echo.
-echo The portable executable is located at:
-echo bin\Release\net8.0-windows\win-x64\publish\RadialMenu.exe
-echo.
-echo This is a self-contained executable that includes the .NET runtime.
-echo You can copy this single file anywhere and it will work!
-echo.
-start "" "bin\Release\net8.0-windows\win-x64\publish\RadialMenu.exe"
-echo.
