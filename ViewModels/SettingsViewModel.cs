@@ -6,6 +6,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using RadialMenu.Models;
 using RadialMenu.Services;
+using System.Windows.Threading;
 
 namespace RadialMenu.ViewModels
 {
@@ -19,6 +20,8 @@ namespace RadialMenu.ViewModels
         private const int MaxSnapshots = 30;
 
         private readonly string _logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "settings.log");
+
+        private readonly DispatcherTimer _autoSaveTimer;
 
         private void Log(string message)
         {
@@ -34,6 +37,17 @@ namespace RadialMenu.ViewModels
             _settingsService = settingsService ?? throw new ArgumentNullException(nameof(settingsService));
 
             Log("SettingsViewModel constructor started");
+
+            // Initialize auto-save timer
+            _autoSaveTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(2) };
+            _autoSaveTimer.Tick += (s, e) => 
+            {
+                _autoSaveTimer.Stop();
+                if (IsDirty)
+                {
+                    Save();
+                }
+            };
 
             // Initialize commands before any setter side-effects
             SaveCommand = new RelayCommand(_ => Save(), _ => IsDirty);
@@ -92,6 +106,16 @@ namespace RadialMenu.ViewModels
             {
                 if (_isDirty == value) return;
                 _isDirty = value;
+
+                // Auto-save logic
+                if (_isDirty)
+                {
+                    _autoSaveTimer.Start();
+                }
+                else
+                {
+                    _autoSaveTimer.Stop();
+                }
 
                 // Debugging log
                 Console.WriteLine($"IsDirty changed to: {_isDirty}");

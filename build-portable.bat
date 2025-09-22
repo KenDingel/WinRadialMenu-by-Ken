@@ -57,4 +57,3 @@ echo You can copy this single file anywhere and it will work!
 echo.
 start "" "bin\Release\net8.0-windows\win-x64\publish\RadialMenu.exe"
 echo.
-pause

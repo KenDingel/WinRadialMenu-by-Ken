@@ -120,51 +120,85 @@ namespace RadialMenu
             Deactivated += OnDeactivated;
         }
 
+        private List<ConfigItem> ConvertMenuItems(System.Collections.ObjectModel.ObservableCollection<Models.MenuItemConfig> menuItems)
+        {
+            var result = new List<ConfigItem>();
+            foreach (var item in menuItems)
+            {
+                result.Add(new ConfigItem
+                {
+                    Label = item.Label,
+                    Icon = item.Icon,
+                    Color = item.Color,
+                    Action = item.Action,
+                    Path = item.Path,
+                    Submenu = item.Submenu != null ? ConvertMenuItems(item.Submenu) : null
+                });
+            }
+            return result;
+        }
+
         private void LoadConfiguration()
         {
             try
             {
-                var configPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.json");
-                if (File.Exists(configPath))
+                if (System.Windows.Application.Current is App app && app.SettingsService != null)
                 {
-                    var json = File.ReadAllText(configPath);
-                    try
+                    var settings = app.SettingsService.Load();
+                    if (settings?.Menu != null)
                     {
-                        // Try legacy format first (top-level Items)
-                        var jo = Newtonsoft.Json.Linq.JObject.Parse(json);
-                        if (jo["Items"] != null)
-                        {
-                            _config = jo.ToObject<MenuConfiguration>() ?? GetDefaultConfiguration();
-                        }
-                        else if (jo["Menu"] != null)
-                        {
-                            // New Settings schema (written by SettingsService) - map Menu -> Items
-                            var menuToken = jo["Menu"];
-                            if (menuToken != null)
-                            {
-                                var items = menuToken.ToObject<List<ConfigItem>>() ?? new List<ConfigItem>();
-                                _config = new MenuConfiguration { Items = items };
-                            }
-                            else
-                            {
-                                _config = GetDefaultConfiguration();
-                            }
-                        }
-                        else
-                        {
-                            // unknown shape - fall back to legacy deserialization
-                            _config = JsonConvert.DeserializeObject<MenuConfiguration>(json) ?? GetDefaultConfiguration();
-                        }
+                        _config = new MenuConfiguration { Items = ConvertMenuItems(settings.Menu) };
                     }
-                    catch
+                    else
                     {
                         _config = GetDefaultConfiguration();
                     }
                 }
                 else
                 {
-                    _config = GetDefaultConfiguration();
-                    SaveConfiguration();
+                    // Fallback: load from file next to exe (for standalone settings editor)
+                    var configPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "config.json");
+                    if (File.Exists(configPath))
+                    {
+                        var json = File.ReadAllText(configPath);
+                        try
+                        {
+                            // Try legacy format first (top-level Items)
+                            var jo = Newtonsoft.Json.Linq.JObject.Parse(json);
+                            if (jo["Items"] != null)
+                            {
+                                _config = jo.ToObject<MenuConfiguration>() ?? GetDefaultConfiguration();
+                            }
+                            else if (jo["Menu"] != null)
+                            {
+                                // New Settings schema (written by SettingsService) - map Menu -> Items
+                                var menuToken = jo["Menu"];
+                                if (menuToken != null)
+                                {
+                                    var items = menuToken.ToObject<List<ConfigItem>>() ?? new List<ConfigItem>();
+                                    _config = new MenuConfiguration { Items = items };
+                                }
+                                else
+                                {
+                                    _config = GetDefaultConfiguration();
+                                }
+                            }
+                            else
+                            {
+                                // unknown shape - fall back to legacy deserialization
+                                _config = JsonConvert.DeserializeObject<MenuConfiguration>(json) ?? GetDefaultConfiguration();
+                            }
+                        }
+                        catch
+                        {
+                            _config = GetDefaultConfiguration();
+                        }
+                    }
+                    else
+                    {
+                        _config = GetDefaultConfiguration();
+                        SaveConfiguration();
+                    }
                 }
             }
             catch
@@ -298,6 +332,14 @@ namespace RadialMenu
             _centerPoint = new Point(_canvas.Width / 2, _canvas.Height / 2);
 
             Log($"ShowAt called. Config items: {_config?.Items?.Count ?? 0}. Canvas size: {_canvas.Width}x{_canvas.Height}. Center: {_centerPoint}");
+
+            // Clear all canvas children except center elements
+            UIElement[] centerElements = { _centerCircle, _centerText };
+            _canvas.Children.Clear();
+            foreach (var elem in centerElements)
+            {
+                _canvas.Children.Add(elem);
+            }
 
             // Reposition center circle and center text to be perfectly centered
             PositionCenterElements();

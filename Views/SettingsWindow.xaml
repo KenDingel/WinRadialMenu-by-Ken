@@ -98,18 +98,18 @@
 
         <!-- Bottom toolbar -->
         <DockPanel Grid.Row="1" LastChildFill="False" Margin="12">
-                <StackPanel Orientation="Vertical" DockPanel.Dock="Right">
-                    <StackPanel Orientation="Horizontal">
-                        <Button Content="Undo" Margin="4" Command="{Binding UndoCommand}" IsEnabled="{Binding CanUndo}" Style="{StaticResource ModernButton}" />
-                        <Button Content="Redo" Margin="4" Command="{Binding RedoCommand}" IsEnabled="{Binding CanRedo}" Style="{StaticResource ModernButton}" />
-                        <Button x:Name="BtnImport" Content="Import" Margin="4" Style="{StaticResource ModernButton}" Command="{Binding ImportCommand}" />
-                    </StackPanel>
-                    <StackPanel Orientation="Horizontal">
-                        <Button x:Name="BtnExport" Content="Export" Margin="4" Style="{StaticResource ModernButton}" Command="{Binding ExportCommand}" />
-                        <Button Content="Cancel" Margin="4" Width="90" Command="{Binding CancelCommand}" Style="{StaticResource ModernButton}" />
-                        <Button x:Name="BtnSave" Content="Save" Margin="4" Width="90" Command="{Binding SaveCommand}" IsEnabled="{Binding IsDirty}" Style="{StaticResource ModernButton}" />
-                    </StackPanel>
-                </StackPanel>
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Left">
+                <Button Content="Undo" Margin="4" Command="{Binding UndoCommand}" IsEnabled="{Binding CanUndo}" Style="{StaticResource ModernButton}" />
+                <Button Content="Redo" Margin="4" Command="{Binding RedoCommand}" IsEnabled="{Binding CanRedo}" Style="{StaticResource ModernButton}" />
+                <Button x:Name="BtnImport" Content="Import" Margin="4" Style="{StaticResource ModernButton}" Command="{Binding ImportCommand}" />
+                <Button x:Name="BtnExport" Content="Export" Margin="4" Style="{StaticResource ModernButton}" Command="{Binding ExportCommand}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Right">
+                <Button Content="Cancel" Margin="4" Width="90" Command="{Binding CancelCommand}" Style="{StaticResource ModernButton}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
+                <Button x:Name="BtnSave" Content="Save Settings" Margin="4" Width="150" Height="40" FontSize="16" FontWeight="Bold" Command="{Binding SaveCommand}" IsEnabled="{Binding IsDirty}" Style="{StaticResource ModernButton}" />
+            </StackPanel>
         </DockPanel>
     </Grid>
 </Window>
