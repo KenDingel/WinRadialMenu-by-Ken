@@ -83,15 +83,15 @@ namespace RadialMenu
             Background = Brushes.Transparent;
             Topmost = true;
             ShowInTaskbar = false;
-            Width = 600 * _uiScale;
-            Height = 600 * _uiScale;
+            Width = 1800 * _uiScale; // Increased by 200% (3x original size)
+            Height = 1800 * _uiScale; // Increased by 200% (3x original size)
             WindowStartupLocation = WindowStartupLocation.Manual;
             
             // Main canvas
             _canvas = new Canvas
             {
-                Width = 600 * _uiScale,
-                Height = 600 * _uiScale,
+                Width = 1800 * _uiScale, // Increased by 200% (3x original size)
+                Height = 1800 * _uiScale, // Increased by 200% (3x original size)
                 Background = Brushes.Transparent
             };
 
@@ -380,6 +380,11 @@ namespace RadialMenu
             {
                 _canvas.Children.Remove(item.Visual);
                 _canvas.Children.Remove(item.LabelText);
+                // Clean up progress ring if it exists
+                if (item.ProgressRing != null)
+                {
+                    _canvas.Children.Remove(item.ProgressRing);
+                }
             }
             _menuItems.Clear();
             Log($"LoadMenuItems start. Requested count: {configItems?.Count ?? 0}");
@@ -487,8 +492,14 @@ namespace RadialMenu
                 // attach direct mouse events to ensure hover/click works even if proximity math misses
                 ellipse.MouseEnter += (s, ev) =>
                 {
-                    HoverItem(menuItem);
-                    _hoveredItem = menuItem;
+                    if (_hoveredItem != menuItem)
+                    {
+                        UnhoverAll();
+                        _hoverExecuteTimer.Stop(); // Stop any pending execution
+                        HoverItem(menuItem);
+                        _hoveredItem = menuItem;
+                        _hoverExecuteTimer.Start(); // Start timer for new hover
+                    }
                 };
                 ellipse.MouseLeave += (s, ev) =>
                 {
@@ -496,6 +507,7 @@ namespace RadialMenu
                     if (_hoveredItem == menuItem)
                     {
                         UnhoverAll();
+                        _hoverExecuteTimer.Stop(); // Stop pending execution
                     }
                 };
                 ellipse.MouseLeftButtonUp += (s, ev) => ExecuteItem(menuItem);
@@ -514,35 +526,43 @@ namespace RadialMenu
             var span = 120.0; // degrees of spread for children
             var startAngle = parent.Angle - span / 2;
             var step = count > 1 ? span / (count - 1) : 0;
-            var childDistance = 140.0 * _uiScale; // scaled distance from parent
+            var baseChildDistance = 140.0 * _uiScale; // base scaled distance from parent
 
             var connectors = new List<UIElement>();
 
-            // Precompute target positions so we can check canvas bounds and expand/shift canvas if needed
+            // Capture parent center BEFORE any potential canvas shift
+            var originalParentCenter = new Point(parent.Center.X, parent.Center.Y);
+
+            // Calculate initial target positions
             var targets = new List<Point>();
             for (int i = 0; i < count; i++)
             {
                 var angle = startAngle + i * step;
                 var rad = angle * Math.PI / 180;
-                var tx = parent.Center.X + Math.Cos(rad) * childDistance;
-                var ty = parent.Center.Y + Math.Sin(rad) * childDistance;
+                var tx = parent.Center.X + Math.Cos(rad) * baseChildDistance;
+                var ty = parent.Center.Y + Math.Sin(rad) * baseChildDistance;
                 targets.Add(new Point(tx, ty));
             }
 
-            // Ensure canvas will fit all targets (prevent cutoff by expanding/and/or shifting canvas if necessary)
+            // Calculate scale factor to fit all targets within canvas bounds
+            double scaleFactor = 1.0;
             try
             {
                 var half = ((48.0 * 1.5) / 2.0) * _uiScale; // scaled half node size
-                var shift = EnsureCanvasFitsTargets(targets, half);
-                if (shift.X != 0 || shift.Y != 0)
-                {
-                    for (int t = 0; t < targets.Count; t++)
-                    {
-                        targets[t] = new Point(targets[t].X + shift.X, targets[t].Y + shift.Y);
-                    }
-                }
+                scaleFactor = CalculateScaleToFitTargets(targets, half);
             }
             catch { }
+
+            // Apply scale factor to child distance and recalculate positions
+            var adjustedChildDistance = baseChildDistance * scaleFactor;
+            for (int i = 0; i < count; i++)
+            {
+                var angle = startAngle + i * step;
+                var rad = angle * Math.PI / 180;
+                var tx = parent.Center.X + Math.Cos(rad) * adjustedChildDistance;
+                var ty = parent.Center.Y + Math.Sin(rad) * adjustedChildDistance;
+                targets[i] = new Point(tx, ty);
+            }
 
             for (int i = 0; i < count; i++)
             {
@@ -571,10 +591,10 @@ namespace RadialMenu
                 // connector line (behind nodes)
                 var line = new System.Windows.Shapes.Line
                 {
-                    X1 = parent.Center.X,
-                    Y1 = parent.Center.Y,
-                    X2 = parent.Center.X,
-                    Y2 = parent.Center.Y,
+                    X1 = originalParentCenter.X,
+                    Y1 = originalParentCenter.Y,
+                    X2 = originalParentCenter.X,
+                    Y2 = originalParentCenter.Y,
                     Stroke = new SolidColorBrush(Color.FromArgb(160, 255, 255, 255)),
                     StrokeThickness = 2,
                     Opacity = 0.8
@@ -584,7 +604,7 @@ namespace RadialMenu
                 connectors.Add(line);
 
                 // initial transform from parent center -> will animate into place with spring
-                var translate = new TranslateTransform(parent.Center.X - targetX, parent.Center.Y - targetY);
+                var translate = new TranslateTransform(originalParentCenter.X - targetX, originalParentCenter.Y - targetY);
                 var scale = new ScaleTransform(0.3, 0.3);
                 var tg = new TransformGroup();
                 tg.Children.Add(scale);
@@ -613,14 +633,14 @@ namespace RadialMenu
                 _canvas.Children.Add(label);
 
                 // Animate line end to target point
-                var x2Anim = new DoubleAnimation(parent.Center.X, targetX, TimeSpan.FromMilliseconds(480)) { EasingFunction = new ElasticEase { Oscillations = 2, Springiness = 6, EasingMode = EasingMode.EaseOut } };
-                var y2Anim = new DoubleAnimation(parent.Center.Y, targetY, TimeSpan.FromMilliseconds(480)) { EasingFunction = new ElasticEase { Oscillations = 2, Springiness = 6, EasingMode = EasingMode.EaseOut } };
+                var x2Anim = new DoubleAnimation(originalParentCenter.X, targetX, TimeSpan.FromMilliseconds(480)) { EasingFunction = new ElasticEase { Oscillations = 2, Springiness = 6, EasingMode = EasingMode.EaseOut } };
+                var y2Anim = new DoubleAnimation(originalParentCenter.Y, targetY, TimeSpan.FromMilliseconds(480)) { EasingFunction = new ElasticEase { Oscillations = 2, Springiness = 6, EasingMode = EasingMode.EaseOut } };
                 line.BeginAnimation(System.Windows.Shapes.Line.X2Property, x2Anim);
                 line.BeginAnimation(System.Windows.Shapes.Line.Y2Property, y2Anim);
 
                 // animate translate and scale with springy elastic ease
-                var animX = new DoubleAnimation(parent.Center.X - targetX, 0, TimeSpan.FromMilliseconds(520)) { EasingFunction = new ElasticEase { Oscillations = 2, Springiness = 8, EasingMode = EasingMode.EaseOut } };
-                var animY = new DoubleAnimation(parent.Center.Y - targetY, 0, TimeSpan.FromMilliseconds(520)) { EasingFunction = new ElasticEase { Oscillations = 2, Springiness = 8, EasingMode = EasingMode.EaseOut } };
+                var animX = new DoubleAnimation(originalParentCenter.X - targetX, 0, TimeSpan.FromMilliseconds(520)) { EasingFunction = new ElasticEase { Oscillations = 2, Springiness = 8, EasingMode = EasingMode.EaseOut } };
+                var animY = new DoubleAnimation(originalParentCenter.Y - targetY, 0, TimeSpan.FromMilliseconds(520)) { EasingFunction = new ElasticEase { Oscillations = 2, Springiness = 8, EasingMode = EasingMode.EaseOut } };
                 var animScale = new DoubleAnimation(0.3, 1.0, TimeSpan.FromMilliseconds(520)) { EasingFunction = new ElasticEase { Oscillations = 2, Springiness = 8, EasingMode = EasingMode.EaseOut } };
                 translate.BeginAnimation(TranslateTransform.XProperty, animX);
                 translate.BeginAnimation(TranslateTransform.YProperty, animY);
@@ -643,12 +663,22 @@ namespace RadialMenu
                 ellipse.Cursor = Cursors.Hand;
                 ellipse.MouseEnter += (s, ev) =>
                 {
-                    HoverItem(menuItem);
-                    _hoveredItem = menuItem;
+                    if (_hoveredItem != menuItem)
+                    {
+                        UnhoverAll();
+                        _hoverExecuteTimer.Stop(); // Stop any pending execution
+                        HoverItem(menuItem);
+                        _hoveredItem = menuItem;
+                        _hoverExecuteTimer.Start(); // Start timer for new hover
+                    }
                 };
                 ellipse.MouseLeave += (s, ev) =>
                 {
-                    if (_hoveredItem == menuItem) UnhoverAll();
+                    if (_hoveredItem == menuItem) 
+                    {
+                        UnhoverAll();
+                        _hoverExecuteTimer.Stop(); // Stop pending execution
+                    }
                 };
                 ellipse.MouseLeftButtonUp += (s, ev) => ExecuteItem(menuItem);
 
@@ -761,6 +791,136 @@ namespace RadialMenu
             return null;
         }
 
+        private System.Windows.Shapes.Path CreateProgressRing(RadialMenuItem item, double progress)
+        {
+            var center = item.Center;
+            var radius = item.Radius + 4; // Slightly larger than the node
+            var strokeWidth = 3.0;
+            
+            var geometry = new PathGeometry();
+            var figure = new PathFigure();
+            
+            // Calculate arc based on progress (0.0 to 1.0)
+            var angle = progress * 360.0;
+            var angleRad = (angle - 90) * Math.PI / 180.0; // Start from top
+            
+            // Start point (top of circle)
+            var startX = center.X;
+            var startY = center.Y - radius;
+            figure.StartPoint = new Point(startX, startY);
+            
+            if (progress > 0)
+            {
+                // End point
+                var endX = center.X + Math.Cos(angleRad) * radius;
+                var endY = center.Y + Math.Sin(angleRad) * radius;
+                
+                var isLargeArc = angle > 180;
+                
+                figure.Segments.Add(new ArcSegment
+                {
+                    Point = new Point(endX, endY),
+                    Size = new Size(radius, radius),
+                    SweepDirection = SweepDirection.Clockwise,
+                    IsLargeArc = isLargeArc
+                });
+            }
+            
+            geometry.Figures.Add(figure);
+            
+            var path = new System.Windows.Shapes.Path
+            {
+                Data = geometry,
+                Stroke = new SolidColorBrush(Colors.White),
+                StrokeThickness = strokeWidth,
+                Fill = null,
+                StrokeStartLineCap = PenLineCap.Round,
+                StrokeEndLineCap = PenLineCap.Round
+            };
+            
+            // Position and add to canvas
+            _canvas.Children.Add(path);
+            Panel.SetZIndex(path, 4); // Above everything else
+            
+            return path;
+        }
+
+        private void AnimateProgressRing(System.Windows.Shapes.Path progressRing, double durationMs)
+        {
+            // Create a custom animation to update the progress ring geometry
+            var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(16) }; // ~60 FPS
+            var startTime = DateTime.Now;
+            var duration = TimeSpan.FromMilliseconds(durationMs);
+            
+            timer.Tick += (s, e) =>
+            {
+                var elapsed = DateTime.Now - startTime;
+                var progress = Math.Min(1.0, elapsed.TotalMilliseconds / durationMs);
+                
+                if (progress >= 1.0)
+                {
+                    timer.Stop();
+                    return;
+                }
+                
+                // Update the progress ring geometry
+                UpdateProgressRingGeometry(progressRing, progress);
+            };
+            
+            timer.Start();
+        }
+
+        private void UpdateProgressRingGeometry(System.Windows.Shapes.Path progressRing, double progress)
+        {
+            // Find the RadialMenuItem this progress ring belongs to
+            RadialMenuItem? item = null;
+            foreach (var menuItem in _menuItems)
+            {
+                if (menuItem.ProgressRing == progressRing)
+                {
+                    item = menuItem;
+                    break;
+                }
+            }
+            
+            if (item == null) return;
+            
+            var center = item.Center;
+            var radius = item.Radius + 4; // Slightly larger than the node
+            
+            var geometry = new PathGeometry();
+            var figure = new PathFigure();
+            
+            // Calculate arc based on progress (0.0 to 1.0)
+            var angle = progress * 360.0;
+            var angleRad = (angle - 90) * Math.PI / 180.0; // Start from top
+            
+            // Start point (top of circle)
+            var startX = center.X;
+            var startY = center.Y - radius;
+            figure.StartPoint = new Point(startX, startY);
+            
+            if (progress > 0)
+            {
+                // End point
+                var endX = center.X + Math.Cos(angleRad) * radius;
+                var endY = center.Y + Math.Sin(angleRad) * radius;
+                
+                var isLargeArc = angle > 180;
+                
+                figure.Segments.Add(new ArcSegment
+                {
+                    Point = new Point(endX, endY),
+                    Size = new Size(radius, radius),
+                    SweepDirection = SweepDirection.Clockwise,
+                    IsLargeArc = isLargeArc
+                });
+            }
+            
+            geometry.Figures.Add(figure);
+            progressRing.Data = geometry;
+        }
+
         // Normalize angles to 0..360 range
         private static double NormalizeAngle(double angle)
         {
@@ -781,8 +941,8 @@ namespace RadialMenu
                     scale = new ScaleTransform(1, 1);
                     tg.Children.Insert(0, scale);
                 }
-                var scaleX = new DoubleAnimation(scale.ScaleX, 1.15, TimeSpan.FromMilliseconds(150)) { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut } };
-                var scaleY = new DoubleAnimation(scale.ScaleY, 1.15, TimeSpan.FromMilliseconds(150)) { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut } };
+                var scaleX = new DoubleAnimation(scale.ScaleX, 1.1, TimeSpan.FromMilliseconds(150)) { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut } };
+                var scaleY = new DoubleAnimation(scale.ScaleY, 1.1, TimeSpan.FromMilliseconds(150)) { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut } };
                 scale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleX);
                 scale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleY);
             }
@@ -794,6 +954,10 @@ namespace RadialMenu
             // Highlight stroke
             item.Visual.Stroke = new SolidColorBrush(Colors.White);
             item.Visual.StrokeThickness = 3;
+
+            // Create and animate progress ring
+            item.ProgressRing = CreateProgressRing(item, 0.0);
+            AnimateProgressRing(item.ProgressRing, 500); // 500ms to complete the circle
 
             // Increase glow with brighter color
             if (item.Visual.Effect is DropShadowEffect glow)
@@ -830,6 +994,13 @@ namespace RadialMenu
                 // Reset stroke
                 item.Visual.Stroke = new SolidColorBrush(Color.FromArgb(255, item.BaseColor.R, item.BaseColor.G, item.BaseColor.B));
                 item.Visual.StrokeThickness = 2;
+                
+                // Remove progress ring if it exists
+                if (item.ProgressRing != null)
+                {
+                    _canvas.Children.Remove(item.ProgressRing);
+                    item.ProgressRing = null;
+                }
                 
                 if (item.Visual.Effect is DropShadowEffect glow)
                 {
@@ -1073,6 +1244,43 @@ namespace RadialMenu
         // Ensure the canvas is large enough (or shifted) so that given target points (in canvas coordinates)
         // are fully visible inside the canvas. This method will increase the canvas size if needed and shift
         // existing children so that logical coordinates remain consistent. `half` is half the node size.
+        private double CalculateScaleToFitTargets(List<Point> targets, double half)
+        {
+            if (_canvas == null || targets.Count == 0) return 1.0;
+
+            double minX = double.MaxValue, minY = double.MaxValue, maxX = double.MinValue, maxY = double.MinValue;
+            foreach (var p in targets)
+            {
+                minX = Math.Min(minX, p.X - half);
+                minY = Math.Min(minY, p.Y - half);
+                maxX = Math.Max(maxX, p.X + half);
+                maxY = Math.Max(maxY, p.Y + half);
+            }
+
+            // Add generous padding (15% of canvas size) to ensure nodes always fit
+            double paddingX = _canvas.Width * 0.15;
+            double paddingY = _canvas.Height * 0.15;
+            double availableWidth = _canvas.Width - 2 * paddingX;
+            double availableHeight = _canvas.Height - 2 * paddingY;
+
+            // Calculate required bounds
+            double requiredWidth = maxX - minX;
+            double requiredHeight = maxY - minY;
+
+            // Calculate scale factor needed to fit content
+            double scaleX = requiredWidth > availableWidth ? availableWidth / requiredWidth : 1.0;
+            double scaleY = requiredHeight > availableHeight ? availableHeight / requiredHeight : 1.0;
+            
+            // Use the smaller scale to ensure both dimensions fit
+            double scale = Math.Min(scaleX, scaleY);
+            
+            // Ensure minimum scale of 0.3 to maintain visibility and usability
+            scale = Math.Max(scale, 0.3);
+            
+            // Don't scale up, only scale down
+            return Math.Min(scale, 1.0);
+        }
+
         private Point EnsureCanvasFitsTargets(List<Point> targets, double half)
         {
             if (_canvas == null) return new Point(0, 0);
@@ -1150,6 +1358,7 @@ namespace RadialMenu
         public Point Center { get; set; }
         public double Radius { get; set; }
         public bool Expanded { get; set; } = false;
+        public System.Windows.Shapes.Path? ProgressRing { get; set; }
     }
 
     public class MenuLevel

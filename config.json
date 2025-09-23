@@ -265,6 +265,55 @@
           "Path": "com.epicgames.launcher://apps"
         }
       ]
+    },
+    {
+      "Label": "Test Deep Nesting",
+      "Icon": "🔍",
+      "Color": "#FFFF5722",
+      "Submenu": [
+        {
+          "Label": "Level 2 Item A",
+          "Icon": "📁",
+          "Submenu": [
+            {
+              "Label": "Level 3 Item A1",
+              "Icon": "📄",
+              "Submenu": [
+                {
+                  "Label": "Level 4 Item A1a",
+                  "Icon": "📝",
+                  "Action": "launch",
+                  "Path": "notepad"
+                },
+                {
+                  "Label": "Level 4 Item A1b", 
+                  "Icon": "🔢",
+                  "Action": "launch",
+                  "Path": "calc"
+                }
+              ]
+            },
+            {
+              "Label": "Level 3 Item A2",
+              "Icon": "📊",
+              "Action": "launch", 
+              "Path": "taskmgr"
+            }
+          ]
+        },
+        {
+          "Label": "Level 2 Item B",
+          "Icon": "🌐",
+          "Submenu": [
+            {
+              "Label": "Level 3 Item B1",
+              "Icon": "🔗",
+              "Action": "url",
+              "Path": "https://github.com"
+            }
+          ]
+        }
+      ]
     }
   ]
 }
