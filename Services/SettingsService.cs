@@ -22,9 +22,9 @@ namespace RadialMenu.Services
             }
             else
             {
-                // Use user app data for persistent settings across rebuilds
-                var appData = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-                var appDir = Path.Combine(appData, "RadialMenu");
+                // Use desktop for persistent settings across rebuilds
+                var desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+                var appDir = Path.Combine(desktop, "RadialMenu");
                 Directory.CreateDirectory(appDir);
                 _configPath = Path.Combine(appDir, "config.json");
             }
