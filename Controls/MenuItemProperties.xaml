@@ -21,8 +21,7 @@
 
             <TextBlock Text="Color" Margin="0,10,0,2"/>
             <ComboBox SelectedItem="{Binding SelectedColor, Mode=TwoWay}" 
-                      ItemsSource="{Binding AvailableColors}" 
-                      DisplayMemberPath="Name">
+                      ItemsSource="{Binding AvailableColors}">
                 <ComboBox.ItemTemplate>
                     <DataTemplate>
                         <StackPanel Orientation="Horizontal">

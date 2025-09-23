@@ -119,8 +119,19 @@ namespace RadialMenu
         {
             Dispatcher.Invoke(() =>
             {
-                var settingsWindow = new Views.SettingsWindow();
-                settingsWindow.ShowDialog();
+                try
+                {
+                    var settingsWindow = new Views.SettingsWindow();
+                    settingsWindow.ShowDialog();
+                }
+                catch (Exception ex)
+                {
+                    System.Windows.MessageBox.Show(
+                        $"Failed to open settings window: {ex.Message}\n\nDetails: {ex}", 
+                        "Settings Error", 
+                        MessageBoxButton.OK, 
+                        MessageBoxImage.Error);
+                }
             });
         }
 

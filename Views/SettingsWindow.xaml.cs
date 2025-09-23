@@ -22,37 +22,78 @@ namespace RadialMenu.Views
 
         public SettingsWindow()
         {
-            Log("SettingsWindow constructor started");
-            InitializeComponent();
-            if (Application.Current is App app && app.SettingsService != null)
+            try
             {
-                Log("Using app SettingsService");
-                _vm = new SettingsViewModel(app.SettingsService);
-                DataContext = _vm;
-            }
-            else
-            {
-                Log("Fallback: creating new SettingsService");
-                // fallback: create SettingsService directly
-                var svc = new Services.SettingsService();
-                _vm = new SettingsViewModel(svc);
-                DataContext = _vm;
-            }
-
-            // Load default page
-            ContentHost.Content = CreateGeneralPage();
-
-            // Wire ViewModel events
-            if (_vm != null)
-            {
-                _vm.NavigateRequested += (page) =>
+                Log("SettingsWindow constructor started");
+                InitializeComponent();
+                
+                if (Application.Current is App app && app.SettingsService != null)
                 {
-                    Dispatcher.Invoke(() => ShowPage(page));
-                };
-                _vm.ImportRequested += () => Dispatcher.Invoke(() => DoImport());
-                _vm.ExportRequested += () => Dispatcher.Invoke(() => DoExport());
+                    Log("Using app SettingsService");
+                    _vm = new SettingsViewModel(app.SettingsService);
+                    DataContext = _vm;
+                }
+                else
+                {
+                    Log("Fallback: creating new SettingsService");
+                    // fallback: create SettingsService directly
+                    var svc = new Services.SettingsService();
+                    _vm = new SettingsViewModel(svc);
+                    DataContext = _vm;
+                }
+
+                // Load default page
+                ContentHost.Content = CreateGeneralPage();
+
+                // Wire ViewModel events
+                if (_vm != null)
+                {
+                    _vm.NavigateRequested += (page) =>
+                    {
+                        try
+                        {
+                            Dispatcher.Invoke(() => ShowPage(page));
+                        }
+                        catch (Exception ex)
+                        {
+                            Log($"NavigateRequested error: {ex.Message}");
+                        }
+                    };
+                    _vm.ImportRequested += () => 
+                    {
+                        try
+                        {
+                            Dispatcher.Invoke(() => DoImport());
+                        }
+                        catch (Exception ex)
+                        {
+                            Log($"ImportRequested error: {ex.Message}");
+                        }
+                    };
+                    _vm.ExportRequested += () => 
+                    {
+                        try
+                        {
+                            Dispatcher.Invoke(() => DoExport());
+                        }
+                        catch (Exception ex)
+                        {
+                            Log($"ExportRequested error: {ex.Message}");
+                        }
+                    };
+                }
+                Log("SettingsWindow constructor completed");
             }
-            Log("SettingsWindow constructor completed");
+            catch (Exception ex)
+            {
+                Log($"SettingsWindow constructor failed: {ex.Message}\n{ex.StackTrace}");
+                MessageBox.Show(
+                    $"Failed to initialize settings window: {ex.Message}", 
+                    "Settings Initialization Error", 
+                    MessageBoxButton.OK, 
+                    MessageBoxImage.Error);
+                throw; // Re-throw to be caught by the outer ShowSettings method
+            }
         }
 
         private void ShowPage(string? page)
