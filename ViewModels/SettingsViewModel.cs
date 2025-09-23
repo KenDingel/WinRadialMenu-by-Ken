@@ -146,6 +146,9 @@ namespace RadialMenu.ViewModels
         public RelayCommand TestActionCommand { get; }
 
         public System.Collections.Generic.List<string> ActionTypes { get; } = new() { "None", "launch", "run" };
+        
+        // Color palette for menu item colors
+        public System.Collections.Generic.List<ColorOption> AvailableColors { get; } = ColorPalette.PredefinedColors;
 
         public event Action? MenuChanged;
         public event Action<string>? NavigateRequested;
@@ -164,8 +167,27 @@ namespace RadialMenu.ViewModels
                 if (_selectedMenuItem != null)
                     _selectedMenuItem.PropertyChanged += OnSelectedItemPropertyChanged;
                 OnPropertyChanged();
+                OnPropertyChanged(nameof(SelectedColor));
                 DuplicateMenuItemCommand?.RaiseCanExecuteChanged();
                 DeleteMenuItemCommand?.RaiseCanExecuteChanged();
+            }
+        }
+
+        public ColorOption SelectedColor
+        {
+            get
+            {
+                if (SelectedMenuItem?.Color == null)
+                    return ColorPalette.GetDefaultColor();
+                return ColorPalette.GetColorByHex(SelectedMenuItem.Color);
+            }
+            set
+            {
+                if (SelectedMenuItem != null && value != null)
+                {
+                    SelectedMenuItem.Color = value.HexValue;
+                    OnPropertyChanged();
+                }
             }
         }
 

@@ -3,8 +3,12 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:converters="clr-namespace:RadialMenu.Converters"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="300">
+    <UserControl.Resources>
+        <converters:HexColorToBrushConverter x:Key="HexColorToBrushConverter"/>
+    </UserControl.Resources>
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="10">
             <TextBlock Text="Menu Item Properties" FontSize="16" FontWeight="Bold" Margin="0,0,0,10"/>
@@ -16,7 +20,21 @@
             <TextBox Text="{Binding SelectedMenuItem.Icon, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
 
             <TextBlock Text="Color" Margin="0,10,0,2"/>
-            <TextBox Text="{Binding SelectedMenuItem.Color, Mode=TwoWay, UpdateSourceTrigger=LostFocus}" />
+            <ComboBox SelectedItem="{Binding SelectedColor, Mode=TwoWay}" 
+                      ItemsSource="{Binding AvailableColors}" 
+                      DisplayMemberPath="Name">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Horizontal">
+                            <Rectangle Width="16" Height="16" 
+                                       Fill="{Binding HexValue, Converter={StaticResource HexColorToBrushConverter}}" 
+                                       Stroke="Gray" StrokeThickness="1" 
+                                       Margin="0,0,8,0"/>
+                            <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
 
             <TextBlock Text="Action Type" Margin="0,10,0,2"/>
             <ComboBox SelectedValue="{Binding SelectedMenuItem.Action, Mode=TwoWay}" ItemsSource="{Binding ActionTypes}" />
