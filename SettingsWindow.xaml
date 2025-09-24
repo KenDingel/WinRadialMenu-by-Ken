@@ -3,118 +3,112 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:RadialMenu.ViewModels"
         xmlns:local="clr-namespace:RadialMenu"
-        Title="RadialMenu Settings" Height="600" Width="900"
+        Title="RadialMenu Settings" Height="650" Width="950"
         Background="{StaticResource BackgroundBrush}"
-        Foreground="{StaticResource TextBrush}">
-    <Window.Resources>
-        <!-- Modern color scheme -->
-        <Color x:Key="AccentColor">#FF2D7DD2</Color>
-        <Color x:Key="BackgroundColor">#E6000000</Color>
-        <Color x:Key="HoverColor">#FF45A5FF</Color>
-        <Color x:Key="TextColor">#FFFFFFFF</Color>
-        
-        <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}"/>
-        <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource BackgroundColor}"/>
-        <SolidColorBrush x:Key="HoverBrush" Color="{StaticResource HoverColor}"/>
-        <SolidColorBrush x:Key="TextBrush" Color="{StaticResource TextColor}"/>
-
-        <!-- Modern button style -->
-        <Style x:Key="ModernButton" TargetType="Button">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="Padding" Value="10,5"/>
-            <Setter Property="Cursor" Value="Hand"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}" 
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding BorderThickness}"
-                                CornerRadius="5">
-                            <ContentPresenter HorizontalAlignment="Center" 
-                                              VerticalAlignment="Center"/>
-                        </Border>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-
-        <Style x:Key="DarkListBox" TargetType="ListBox">
-            <Setter Property="Background" Value="{StaticResource BackgroundBrush}"/>
-            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-            <Setter Property="BorderThickness" Value="0"/>
-        </Style>
-        <Style x:Key="DarkListBoxItem" TargetType="ListBoxItem">
-            <Setter Property="Background" Value="Transparent"/>
-            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Style.Triggers>
-                <Trigger Property="IsSelected" Value="True">
-                    <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
-                </Trigger>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="{StaticResource HoverBrush}"/>
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-        <Style x:Key="DarkTextBox" TargetType="TextBox">
-            <Setter Property="Background" Value="{StaticResource BackgroundBrush}"/>
-            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-        </Style>
-        <Style x:Key="DarkComboBox" TargetType="ComboBox">
-            <Setter Property="Background" Value="{StaticResource BackgroundBrush}"/>
-            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-            <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}"/>
-            <Setter Property="BorderThickness" Value="1"/>
-        </Style>
-        <Style x:Key="DarkComboBoxItem" TargetType="ComboBoxItem">
-            <Setter Property="Background" Value="{StaticResource BackgroundBrush}"/>
-            <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-        </Style>
-    </Window.Resources>
+        FontFamily="{StaticResource PrimaryFontFamily}"
+        WindowStyle="SingleBorderWindow"
+        ResizeMode="CanResize">
     
-    <Grid>
+    <Grid Margin="20">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="200" />
+            <ColumnDefinition Width="240" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-        <!-- Left navigation -->
-        <StackPanel Grid.Column="0" Background="{StaticResource BackgroundBrush}">
-            <TextBlock Text="Settings" FontSize="16" FontWeight="Bold" Margin="10" />
-            <ListBox x:Name="NavList" Margin="10" SelectedIndex="0" Style="{StaticResource DarkListBox}" ItemContainerStyle="{StaticResource DarkListBoxItem}">
-                <ListBoxItem>General</ListBoxItem>
-                <ListBoxItem>Hotkeys</ListBoxItem>
-                <ListBoxItem>Appearance</ListBoxItem>
-                <ListBoxItem>Menu Builder</ListBoxItem>
-                <ListBoxItem>Advanced</ListBoxItem>
-            </ListBox>
-        </StackPanel>
+        <!-- Header -->
+        <TextBlock Grid.Column="0" Grid.ColumnSpan="2"
+                   Text="RadialMenu Settings" 
+                   FontSize="28" 
+                   FontWeight="Light" 
+                   Foreground="{StaticResource OnSurfaceBrush}"
+                   Margin="0,0,0,20"/>
 
-        <!-- Content host -->
-        <Grid Grid.Column="1" Margin="10">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-                <RowDefinition Height="Auto" />
-            </Grid.RowDefinitions>
-
-            <TextBlock Text="RadialMenu Configuration" FontSize="18" FontWeight="Bold" />
-
-            <ContentControl Grid.Row="1" x:Name="ContentHost" Margin="0,10,0,10" />
-
-            <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Content="Save" Width="90" Margin="5" Click="Save_Click" Style="{StaticResource ModernButton}" />
-                <Button Content="Cancel" Width="90" Margin="5" Click="Cancel_Click" Style="{StaticResource ModernButton}" />
+        <!-- Modern Navigation Sidebar -->
+        <Border Grid.Column="0" Grid.Row="1"
+                Background="{StaticResource SurfaceBrush}"
+                CornerRadius="12"
+                Effect="{StaticResource ElevationShadow2}"
+                Margin="0,0,20,0">
+            <StackPanel Margin="8">
+                <TextBlock Text="Categories" 
+                           FontSize="16" 
+                           FontWeight="Medium" 
+                           Foreground="{StaticResource OnSurfaceSecondaryBrush}"
+                           Margin="12,16,12,8"/>
+                <ListBox x:Name="NavList" 
+                         SelectedIndex="0" 
+                         Style="{StaticResource ModernListBoxStyle}"
+                         ItemContainerStyle="{StaticResource ModernListBoxItemStyle}"
+                         Background="Transparent"
+                         BorderThickness="0">
+                    <ListBoxItem>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="⚙️" FontSize="16" Margin="0,0,8,0"/>
+                            <TextBlock Text="General"/>
+                        </StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="⌨️" FontSize="16" Margin="0,0,8,0"/>
+                            <TextBlock Text="Hotkeys"/>
+                        </StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🎨" FontSize="16" Margin="0,0,8,0"/>
+                            <TextBlock Text="Appearance"/>
+                        </StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="📋" FontSize="16" Margin="0,0,8,0"/>
+                            <TextBlock Text="Menu Builder"/>
+                        </StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem>
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="🔧" FontSize="16" Margin="0,0,8,0"/>
+                            <TextBlock Text="Advanced"/>
+                        </StackPanel>
+                    </ListBoxItem>
+                </ListBox>
             </StackPanel>
-        </Grid>
+        </Border>
+
+        <!-- Modern Content Area -->
+        <Border Grid.Column="1" Grid.Row="1"
+                Background="{StaticResource SurfaceBrush}"
+                CornerRadius="12"
+                Effect="{StaticResource ElevationShadow2}">
+            <Grid Margin="20">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <!-- Content Host -->
+                <ContentControl Grid.Row="0" x:Name="ContentHost" />
+
+                <!-- Action Buttons -->
+                <StackPanel Grid.Row="1" 
+                           Orientation="Horizontal" 
+                           HorizontalAlignment="Right"
+                           Margin="0,20,0,0">
+                    <Button Content="Save Changes" 
+                            Width="120" 
+                            Margin="0,0,12,0" 
+                            Click="Save_Click" 
+                            Style="{StaticResource ModernFlatButtonStyle}"/>
+                    <Button Content="Cancel" 
+                            Width="100" 
+                            Click="Cancel_Click" 
+                            Style="{StaticResource SecondaryButtonStyle}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
     </Grid>
 </Window>

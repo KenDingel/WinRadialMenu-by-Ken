@@ -4,6 +4,10 @@
              ShutdownMode="OnExplicitShutdown">
     <Application.Resources>
         <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Styles/ModernFlatUI.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            
             <!-- Theme Resources -->
             <ResourceDictionary x:Key="DarkTheme">
                 <Color x:Key="AccentColor">#FF2D7DD2</Color>
@@ -46,32 +50,6 @@
             <SolidColorBrush x:Key="TextBrush" Color="{StaticResource TextColor}"/>
             <SolidColorBrush x:Key="SecondaryBrush" Color="{StaticResource SecondaryColor}"/>
 
-            <!-- Modern button style -->
-            <Style x:Key="ModernButton" TargetType="Button">
-                <Setter Property="Background" Value="Transparent"/>
-                <Setter Property="Foreground" Value="{StaticResource TextBrush}"/>
-                <Setter Property="BorderThickness" Value="0"/>
-                <Setter Property="Padding" Value="10,5"/>
-                <Setter Property="Cursor" Value="Hand"/>
-                <Setter Property="Template">
-                    <Setter.Value>
-                        <ControlTemplate TargetType="Button">
-                            <Border Background="{TemplateBinding Background}" 
-                                    BorderBrush="{TemplateBinding BorderBrush}"
-                                    BorderThickness="{TemplateBinding BorderThickness}"
-                                    CornerRadius="5">
-                                <ContentPresenter HorizontalAlignment="Center" 
-                                                  VerticalAlignment="Center"/>
-                            </Border>
-                        </ControlTemplate>
-                    </Setter.Value>
-                </Setter>
-                <Style.Triggers>
-                    <Trigger Property="IsMouseOver" Value="True">
-                        <Setter Property="Background" Value="{StaticResource AccentBrush}"/>
-                    </Trigger>
-                </Style.Triggers>
-            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

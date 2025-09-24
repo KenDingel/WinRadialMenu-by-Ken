@@ -109,14 +109,22 @@ namespace RadialMenu
             // Add blur effect to background
             var blurEffect = new BlurEffect { Radius = 10 };
             
-            // Center circle (dead zone)
+            // Modern flat center circle with sophisticated gradient
             _centerCircle = new Ellipse
             {
                 Width = (_innerRadius * 2) * _uiScale,
                 Height = (_innerRadius * 2) * _uiScale,
-                Fill = new SolidColorBrush(Color.FromArgb(200, 20, 20, 20)),
-                Stroke = new SolidColorBrush(Color.FromArgb(255, 45, 125, 210)),
-                StrokeThickness = 2 * _uiScale
+                Fill = CreateModernCenterGradient(),
+                Stroke = new SolidColorBrush(Color.FromArgb(60, 45, 125, 210)),
+                StrokeThickness = 1 * _uiScale,
+                Effect = new DropShadowEffect 
+                { 
+                    Color = Colors.Black, 
+                    BlurRadius = 12, 
+                    Direction = 270, 
+                    ShadowDepth = 3, 
+                    Opacity = 0.25 
+                }
             };
             Canvas.SetLeft(_centerCircle, (Width / 2) - (_centerCircle.Width / 2));
             Canvas.SetTop(_centerCircle, (Height / 2) - (_centerCircle.Height / 2));
@@ -142,8 +150,17 @@ namespace RadialMenu
                 Text = centerText,
                 Foreground = Brushes.White,
                 FontSize = 16 * _uiScale,
-                FontWeight = FontWeights.Bold,
-                TextAlignment = TextAlignment.Center
+                FontWeight = FontWeights.Medium,
+                FontFamily = new FontFamily("Segoe UI, Arial, sans-serif"),
+                TextAlignment = TextAlignment.Center,
+                Effect = new DropShadowEffect 
+                { 
+                    Color = Colors.Black, 
+                    BlurRadius = 3, 
+                    Direction = 270, 
+                    ShadowDepth = 1, 
+                    Opacity = 0.7 
+                }
             };
             // initial placement; will be repositioned when showing the menu
             Canvas.SetLeft(_centerText, (Width / 2) - 20 * _uiScale);
@@ -291,6 +308,93 @@ namespace RadialMenu
                 });
             }
             return result;
+        }
+
+        /// <summary>
+        /// Creates a modern gradient brush for menu nodes with sophisticated visual effects
+        /// </summary>
+        private Brush CreateModernNodeGradient(Color baseColor)
+        {
+            var gradient = new RadialGradientBrush();
+            gradient.GradientOrigin = new Point(0.3, 0.3);
+            gradient.Center = new Point(0.5, 0.5);
+            gradient.RadiusX = 1.0;
+            gradient.RadiusY = 1.0;
+
+            // Create a sophisticated multi-stop gradient
+            var lightColor = LightenColor(baseColor, 0.4f);
+            var midColor = baseColor;
+            var darkColor = DarkenColor(baseColor, 0.3f);
+
+            gradient.GradientStops.Add(new GradientStop(Color.FromArgb(240, lightColor.R, lightColor.G, lightColor.B), 0.0));
+            gradient.GradientStops.Add(new GradientStop(Color.FromArgb(210, midColor.R, midColor.G, midColor.B), 0.6));
+            gradient.GradientStops.Add(new GradientStop(Color.FromArgb(180, darkColor.R, darkColor.G, darkColor.B), 1.0));
+
+            return gradient;
+        }
+
+        /// <summary>
+        /// Lightens a color by the specified factor
+        /// </summary>
+        private Color LightenColor(Color color, float factor)
+        {
+            var r = Math.Min(255, color.R + (int)((255 - color.R) * factor));
+            var g = Math.Min(255, color.G + (int)((255 - color.G) * factor));
+            var b = Math.Min(255, color.B + (int)((255 - color.B) * factor));
+            return Color.FromRgb((byte)r, (byte)g, (byte)b);
+        }
+
+        /// <summary>
+        /// Darkens a color by the specified factor
+        /// </summary>
+        private Color DarkenColor(Color color, float factor)
+        {
+            var r = Math.Max(0, color.R - (int)(color.R * factor));
+            var g = Math.Max(0, color.G - (int)(color.G * factor));
+            var b = Math.Max(0, color.B - (int)(color.B * factor));
+            return Color.FromRgb((byte)r, (byte)g, (byte)b);
+        }
+
+        /// <summary>
+        /// Creates a vibrant hover gradient with enhanced brightness and modern flat design
+        /// </summary>
+        private Brush CreateModernHoverGradient(Color baseColor)
+        {
+            var gradient = new RadialGradientBrush();
+            gradient.GradientOrigin = new Point(0.2, 0.2);
+            gradient.Center = new Point(0.5, 0.5);
+            gradient.RadiusX = 1.2;
+            gradient.RadiusY = 1.2;
+
+            // Create an enhanced hover gradient with more vibrant colors
+            var brightColor = LightenColor(baseColor, 0.6f);
+            var midColor = LightenColor(baseColor, 0.2f);
+            var edgeColor = baseColor;
+
+            gradient.GradientStops.Add(new GradientStop(Color.FromArgb(255, brightColor.R, brightColor.G, brightColor.B), 0.0));
+            gradient.GradientStops.Add(new GradientStop(Color.FromArgb(240, midColor.R, midColor.G, midColor.B), 0.4));
+            gradient.GradientStops.Add(new GradientStop(Color.FromArgb(220, edgeColor.R, edgeColor.G, edgeColor.B), 1.0));
+
+            return gradient;
+        }
+
+        /// <summary>
+        /// Creates a sophisticated gradient for the center circle with modern flat design principles
+        /// </summary>
+        private Brush CreateModernCenterGradient()
+        {
+            var gradient = new RadialGradientBrush();
+            gradient.GradientOrigin = new Point(0.3, 0.3);
+            gradient.Center = new Point(0.5, 0.5);
+            gradient.RadiusX = 1.0;
+            gradient.RadiusY = 1.0;
+
+            // Create a sophisticated center gradient with subtle depth
+            gradient.GradientStops.Add(new GradientStop(Color.FromArgb(240, 50, 50, 50), 0.0));
+            gradient.GradientStops.Add(new GradientStop(Color.FromArgb(220, 30, 30, 30), 0.6));
+            gradient.GradientStops.Add(new GradientStop(Color.FromArgb(200, 20, 20, 20), 1.0));
+
+            return gradient;
         }
 
         private void LoadConfiguration()
@@ -615,49 +719,113 @@ namespace RadialMenu
                     itemColor = Color.FromRgb(45, 125, 210);
                 }
 
-                // Create circular visual
+                // Create modern flat circular visual with gradient
                 var ellipse = new Ellipse
                 {
                     Width = nodeSize,
                     Height = nodeSize,
-                    Fill = new SolidColorBrush(Color.FromArgb(220, itemColor.R, itemColor.G, itemColor.B)),
-                    Stroke = new SolidColorBrush(Color.FromArgb(255, itemColor.R, itemColor.G, itemColor.B)),
-                    StrokeThickness = 2
+                    Fill = CreateModernNodeGradient(itemColor),
+                    Stroke = new SolidColorBrush(Color.FromArgb(80, itemColor.R, itemColor.G, itemColor.B)),
+                    StrokeThickness = 0.5,
+                    Effect = new DropShadowEffect 
+                    { 
+                        Color = Colors.Black, 
+                        BlurRadius = 8, 
+                        Direction = 270, 
+                        ShadowDepth = 2, 
+                        Opacity = 0.15 
+                    }
                 };
 
                 // Place ellipse at target position
                 Canvas.SetLeft(ellipse, targetX - nodeSize / 2);
                 Canvas.SetTop(ellipse, targetY - nodeSize / 2);
 
-                // For root menu (origin == null), items appear directly in position without animation
-                // For submenu items, animate from origin to target position
+                // Enhanced animations for both root and submenu items
                 if (origin == null)
                 {
-                    // No animation for root menu - items appear in final position immediately
-                    ellipse.RenderTransform = new TransformGroup(); // Empty transform group for consistency
-                    ellipse.RenderTransformOrigin = new Point(0.5, 0.5); // Ensure scaling from center
+                    // Modern entrance animation for root menu items
+                    var scale = new ScaleTransform(0.1, 0.1);
+                    var opacity = new System.Windows.Media.Animation.DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(300 + i * 50));
+                    opacity.EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut };
+                    
+                    var scaleAnim = new DoubleAnimation(0.1, 1.0, TimeSpan.FromMilliseconds(400 + i * 50));
+                    scaleAnim.EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.3 };
+                    
+                    ellipse.RenderTransform = scale;
+                    ellipse.RenderTransformOrigin = new Point(0.5, 0.5);
+                    ellipse.Opacity = 0;
+                    
+                    // Staggered animation based on index for cascade effect
+                    ellipse.BeginAnimation(UIElement.OpacityProperty, opacity);
+                    scale.BeginAnimation(ScaleTransform.ScaleXProperty, scaleAnim);
+                    scale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleAnim);
                 }
                 else
                 {
-                    // Animate submenu items from origin to target
+                    // Enhanced submenu animation with sophisticated motion
                     var initialTranslateX = originPoint.X - targetX;
                     var initialTranslateY = originPoint.Y - targetY;
                     var translate = new TranslateTransform(initialTranslateX, initialTranslateY);
-                    var scale = new ScaleTransform(0.3, 0.3);
+                    var scale = new ScaleTransform(0.1, 0.1);
+                    var rotate = new RotateTransform(0);
+                    
                     var tg = new TransformGroup();
                     tg.Children.Add(scale);
+                    tg.Children.Add(rotate);
                     tg.Children.Add(translate);
+                    
                     ellipse.RenderTransform = tg;
                     ellipse.RenderTransformOrigin = new Point(0.5, 0.5);
+                    ellipse.Opacity = 0;
 
-                    // Animate translate and scale from origin to target
-                    var animX = new DoubleAnimation(initialTranslateX, 0, TimeSpan.FromMilliseconds(320)) { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut } };
-                    var animY = new DoubleAnimation(initialTranslateY, 0, TimeSpan.FromMilliseconds(320)) { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut } };
-                    var animScale = new DoubleAnimation(0.3, 1.0, TimeSpan.FromMilliseconds(320)) { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut } };
+                    // Staggered timing for cascade effect
+                    var delay = i * 80;
+                    var duration = 450;
+                    
+                    // Smooth easing functions
+                    var backEase = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.4 };
+                    var cubicEase = new CubicEase { EasingMode = EasingMode.EaseOut };
+                    
+                    // Animate translate with smooth motion
+                    var animX = new DoubleAnimation(initialTranslateX, 0, TimeSpan.FromMilliseconds(duration)) 
+                    { 
+                        EasingFunction = backEase,
+                        BeginTime = TimeSpan.FromMilliseconds(delay)
+                    };
+                    var animY = new DoubleAnimation(initialTranslateY, 0, TimeSpan.FromMilliseconds(duration)) 
+                    { 
+                        EasingFunction = backEase,
+                        BeginTime = TimeSpan.FromMilliseconds(delay)
+                    };
+                    
+                    // Animate scale with bounce
+                    var animScale = new DoubleAnimation(0.1, 1.0, TimeSpan.FromMilliseconds(duration)) 
+                    { 
+                        EasingFunction = backEase,
+                        BeginTime = TimeSpan.FromMilliseconds(delay)
+                    };
+                    
+                    // Subtle rotation for dynamic effect
+                    var animRotate = new DoubleAnimation(180, 0, TimeSpan.FromMilliseconds(duration)) 
+                    { 
+                        EasingFunction = cubicEase,
+                        BeginTime = TimeSpan.FromMilliseconds(delay)
+                    };
+                    
+                    // Fade in
+                    var animOpacity = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(duration - 100)) 
+                    { 
+                        EasingFunction = cubicEase,
+                        BeginTime = TimeSpan.FromMilliseconds(delay + 50)
+                    };
+                    
                     translate.BeginAnimation(TranslateTransform.XProperty, animX);
                     translate.BeginAnimation(TranslateTransform.YProperty, animY);
                     scale.BeginAnimation(ScaleTransform.ScaleXProperty, animScale);
                     scale.BeginAnimation(ScaleTransform.ScaleYProperty, animScale);
+                    rotate.BeginAnimation(RotateTransform.AngleProperty, animRotate);
+                    ellipse.BeginAnimation(UIElement.OpacityProperty, animOpacity);
                 }
 
                 // Add subtle glow
@@ -667,17 +835,26 @@ namespace RadialMenu
                 // Ensure nodes render above center circle
                 Panel.SetZIndex(ellipse, 2);
 
-                // Create label centered inside the circle
+                // Create modern flat label centered inside the circle
                 var label = new TextBlock
                 {
                     Text = config.Icon + "\n" + config.Label,
                     Foreground = Brushes.White,
                     FontSize = 11 * _uiScale,
-                    FontWeight = FontWeights.SemiBold,
+                    FontWeight = FontWeights.Medium,
+                    FontFamily = new FontFamily("Segoe UI, Arial, sans-serif"),
                     TextAlignment = TextAlignment.Center,
                     TextWrapping = TextWrapping.Wrap,
-                    MaxWidth = nodeSize - 8,
-                    IsHitTestVisible = false
+                    MaxWidth = nodeSize - 12,
+                    IsHitTestVisible = false,
+                    Effect = new DropShadowEffect 
+                    { 
+                        Color = Colors.Black, 
+                        BlurRadius = 2, 
+                        Direction = 270, 
+                        ShadowDepth = 1, 
+                        Opacity = 0.5 
+                    }
                 };
                 label.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
                 var labelSize = label.DesiredSize;
@@ -685,6 +862,27 @@ namespace RadialMenu
                 Canvas.SetTop(label, targetY - labelSize.Height / 2);
                 _canvas.Children.Add(label);
                 Panel.SetZIndex(label, 3);
+                
+                // Animate label with same timing as the ellipse
+                if (origin == null)
+                {
+                    // Root menu label animation
+                    var labelOpacity = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(350 + i * 50));
+                    labelOpacity.EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut };
+                    labelOpacity.BeginTime = TimeSpan.FromMilliseconds(150); // Slight delay after ellipse starts
+                    label.Opacity = 0;
+                    label.BeginAnimation(UIElement.OpacityProperty, labelOpacity);
+                }
+                else
+                {
+                    // Submenu label animation
+                    var delay = i * 80 + 100; // Slight delay after ellipse
+                    var labelOpacity = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(300));
+                    labelOpacity.EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut };
+                    labelOpacity.BeginTime = TimeSpan.FromMilliseconds(delay);
+                    label.Opacity = 0;
+                    label.BeginAnimation(UIElement.OpacityProperty, labelOpacity);
+                }
 
                 var menuItem = new RadialMenuItem
                 {
@@ -1158,13 +1356,13 @@ namespace RadialMenu
                 scale.BeginAnimation(ScaleTransform.ScaleYProperty, scaleY);
             }
 
-            // Brighten color
-            var brightColor = Color.FromArgb(240, item.BaseColor.R, item.BaseColor.G, item.BaseColor.B);
-            item.Visual.Fill = new SolidColorBrush(brightColor);
+            // Create enhanced hover gradient with modern flat design
+            var hoverGradient = CreateModernHoverGradient(item.BaseColor);
+            item.Visual.Fill = hoverGradient;
 
-            // Highlight stroke
-            item.Visual.Stroke = new SolidColorBrush(Colors.White);
-            item.Visual.StrokeThickness = 3;
+            // Modern flat stroke with subtle glow
+            item.Visual.Stroke = new SolidColorBrush(Color.FromArgb(120, 255, 255, 255));
+            item.Visual.StrokeThickness = 2;
 
             // Create and animate progress ring
             item.ProgressRing = CreateProgressRing(item, 0.0);
@@ -1200,11 +1398,12 @@ namespace RadialMenu
                     }
                 }
 
-                item.Visual.Fill = new SolidColorBrush(Color.FromArgb(220, item.BaseColor.R, item.BaseColor.G, item.BaseColor.B));
+                // Restore modern flat gradient
+                item.Visual.Fill = CreateModernNodeGradient(item.BaseColor);
                 
-                // Reset stroke
-                item.Visual.Stroke = new SolidColorBrush(Color.FromArgb(255, item.BaseColor.R, item.BaseColor.G, item.BaseColor.B));
-                item.Visual.StrokeThickness = 2;
+                // Reset stroke with subtle modern flat styling
+                item.Visual.Stroke = new SolidColorBrush(Color.FromArgb(80, item.BaseColor.R, item.BaseColor.G, item.BaseColor.B));
+                item.Visual.StrokeThickness = 0.5;
                 
                 // Remove progress ring if it exists
                 if (item.ProgressRing != null)
