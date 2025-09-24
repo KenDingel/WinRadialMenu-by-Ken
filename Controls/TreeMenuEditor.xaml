@@ -9,9 +9,10 @@
             <Button Content="Duplicate" Command="{Binding DuplicateMenuItemCommand}" Margin="0,0,4,0" Padding="8,4"/>
             <Button Content="Delete" Command="{Binding DeleteMenuItemCommand}" Margin="0,0,4,0" Padding="8,4"/>
             <Separator Margin="8,0"/>
-            <Button Content="Move Up" Command="{Binding MoveUpCommand}" Margin="0,0,4,0" Padding="8,4"/>
-            <Button Content="Move Down" Command="{Binding MoveDownCommand}" Margin="0,0,4,0" Padding="8,4"/>
             <Button Content="Indent" Command="{Binding IndentCommand}" Margin="0,0,4,0" Padding="8,4"/>
+            <Separator Margin="8,0"/>
+            <TextBlock Text="Multi-Select:" VerticalAlignment="Center" Margin="8,0,4,0"/>
+            <Button Content="Clear Selection" Click="ClearMultiSelection_Click" Margin="0,0,4,0" Padding="8,4"/>
         </StackPanel>
 
         <!-- Grid containing Tree View and Status -->
@@ -33,6 +34,11 @@
                 <TreeView.ItemTemplate>
                     <HierarchicalDataTemplate ItemsSource="{Binding Submenu}">
                         <StackPanel Orientation="Horizontal">
+                            <CheckBox x:Name="MultiSelectCheckBox" 
+                                      Margin="0,0,8,0" 
+                                      VerticalAlignment="Center"
+                                      Checked="MultiSelectCheckBox_Checked"
+                                      Unchecked="MultiSelectCheckBox_Unchecked"/>
                             <TextBlock Text="{Binding Icon}" FontSize="14" Margin="0,0,4,0"/>
                             <TextBlock Text="{Binding Label}" />
                         </StackPanel>

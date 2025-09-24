@@ -130,5 +130,83 @@ namespace RadialMenu.Controls
             while (current != null);
             return default;
         }
+
+        private void MultiSelectCheckBox_Checked(object sender, RoutedEventArgs e)
+        {
+            if (sender is CheckBox checkBox && DataContext is ViewModels.SettingsViewModel vm)
+            {
+                var item = GetMenuItemFromCheckBox(checkBox);
+                if (item != null)
+                {
+                    vm.ToggleMenuItemSelection(item);
+                }
+            }
+        }
+
+        private void MultiSelectCheckBox_Unchecked(object sender, RoutedEventArgs e)
+        {
+            if (sender is CheckBox checkBox && DataContext is ViewModels.SettingsViewModel vm)
+            {
+                var item = GetMenuItemFromCheckBox(checkBox);
+                if (item != null)
+                {
+                    vm.ToggleMenuItemSelection(item);
+                }
+            }
+        }
+
+        private void ClearMultiSelection_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is ViewModels.SettingsViewModel vm)
+            {
+                vm.ClearMultiSelection();
+                
+                // Uncheck all checkboxes in the tree
+                UncheckAllCheckBoxes(MenuTreeView);
+            }
+        }
+
+        private Models.MenuItemConfig? GetMenuItemFromCheckBox(CheckBox checkBox)
+        {
+            // Find the TreeViewItem that contains this checkbox
+            var treeViewItem = FindAncestor<TreeViewItem>(checkBox);
+            return treeViewItem?.DataContext as Models.MenuItemConfig;
+        }
+
+        private void UncheckAllCheckBoxes(ItemsControl itemsControl)
+        {
+            for (int i = 0; i < itemsControl.Items.Count; i++)
+            {
+                var container = itemsControl.ItemContainerGenerator.ContainerFromIndex(i) as TreeViewItem;
+                if (container != null)
+                {
+                    // Find checkbox in this item
+                    var checkBox = FindChildByName<CheckBox>(container, "MultiSelectCheckBox");
+                    if (checkBox != null)
+                    {
+                        checkBox.IsChecked = false;
+                    }
+                    
+                    // Recursively process child items
+                    UncheckAllCheckBoxes(container);
+                }
+            }
+        }
+
+        private static T FindChildByName<T>(DependencyObject parent, string childName) where T : DependencyObject
+        {
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
+            {
+                var child = VisualTreeHelper.GetChild(parent, i);
+                if (child is T && (child as FrameworkElement)?.Name == childName)
+                {
+                    return (T)child;
+                }
+                
+                var result = FindChildByName<T>(child, childName);
+                if (result != null) return result;
+            }
+            return null;
+        }
     }
 }

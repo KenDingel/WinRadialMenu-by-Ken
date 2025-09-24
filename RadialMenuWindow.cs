@@ -34,14 +34,20 @@ namespace RadialMenu
             private double _uiScale = 1.6;
         private readonly List<RadialMenuItem> _menuItems = new();
         private RadialMenuItem? _hoveredItem;
-    private readonly double _innerRadius = 40;
-    private readonly double _outerRadius = 220;
+    private double _innerRadius = 40;
+    private double _outerRadius = 220;
     private MenuConfiguration _config = null!;
         private Stack<MenuLevel> _menuStack = new();
     private Ellipse _centerCircle = null!;
     private TextBlock _centerText = null!;
         private bool _isAnimating = false;
         private readonly DispatcherTimer _hoverExecuteTimer;
+        
+        // Spinning animation elements
+        private Ellipse _spinningRing = null!;
+        private Canvas _glowingTipContainer = null!;
+        private Ellipse _glowingTip = null!;
+        private Storyboard _spinningAnimation = null!;
 
         public RadialMenuWindow()
         {
@@ -56,15 +62,20 @@ namespace RadialMenu
                 }
             };
 
-            // Attempt to read UI scale from settings before creating UI elements so sizes/positions are consistent
+            // Load appearance settings before creating UI elements so sizes/positions are consistent
             try
             {
                 if (System.Windows.Application.Current is App app && app.SettingsService != null)
                 {
                     var settings = app.SettingsService.Load();
-                    if (settings?.Appearance != null && settings.Appearance.UiScale > 0)
+                    if (settings?.Appearance != null)
                     {
-                        _uiScale = settings.Appearance.UiScale;
+                        if (settings.Appearance.UiScale > 0)
+                            _uiScale = settings.Appearance.UiScale;
+                        if (settings.Appearance.InnerRadius > 0)
+                            _innerRadius = settings.Appearance.InnerRadius;
+                        if (settings.Appearance.OuterRadius > 0)
+                            _outerRadius = settings.Appearance.OuterRadius;
                     }
                 }
             }
@@ -111,12 +122,26 @@ namespace RadialMenu
             Canvas.SetTop(_centerCircle, (Height / 2) - (_centerCircle.Height / 2));
             _canvas.Children.Add(_centerCircle);
 
-            // Center text (shows current level or "MENU")
+            // Center text (shows current level or from settings)
+            var centerText = "MENU";
+            try
+            {
+                if (System.Windows.Application.Current is App app && app.SettingsService != null)
+                {
+                    var settings = app.SettingsService.Load();
+                    if (!string.IsNullOrEmpty(settings?.Appearance?.CenterText))
+                    {
+                        centerText = settings.Appearance.CenterText;
+                    }
+                }
+            }
+            catch { }
+            
             _centerText = new TextBlock
             {
-                Text = "MENU",
+                Text = centerText,
                 Foreground = Brushes.White,
-                FontSize = 12,
+                FontSize = 16 * _uiScale,
                 FontWeight = FontWeights.Bold,
                 TextAlignment = TextAlignment.Center
             };
@@ -125,12 +150,129 @@ namespace RadialMenu
             Canvas.SetTop(_centerText, (Height / 2) - 8 * _uiScale);
             _canvas.Children.Add(_centerText);
 
+            // Create spinning animation ring
+            CreateSpinningAnimationElements();
+
             Content = _canvas;
 
             // Event handlers
             MouseMove += OnMouseMove;
             KeyDown += OnKeyDown;
             Deactivated += OnDeactivated;
+        }
+
+        private void CreateSpinningAnimationElements()
+        {
+            double centerX = Width / 2;
+            double centerY = Height / 2;
+            double ringRadius = (_outerRadius + 15) * _uiScale; // Slightly outside the outer radius
+
+            // Create spinning ring - a thin ellipse at the outer radius
+            _spinningRing = new Ellipse
+            {
+                Width = ringRadius * 2,
+                Height = ringRadius * 2,
+                Stroke = new SolidColorBrush(Color.FromArgb(60, 45, 125, 210)), // More subtle semi-transparent blue
+                StrokeThickness = 1.5 * _uiScale,
+                Fill = Brushes.Transparent,
+                RenderTransformOrigin = new Point(0.5, 0.5), // Rotate around center
+                RenderTransform = new RotateTransform(),
+                Visibility = Visibility.Collapsed // Initially hidden
+            };
+            
+            // Position the ring at center
+            Canvas.SetLeft(_spinningRing, centerX - ringRadius);
+            Canvas.SetTop(_spinningRing, centerY - ringRadius);
+            
+            // Create a container for the glowing tip that will rotate around the center
+            _glowingTipContainer = new Canvas
+            {
+                Width = ringRadius * 2,
+                Height = ringRadius * 2,
+                RenderTransformOrigin = new Point(0.5, 0.5),
+                RenderTransform = new RotateTransform(),
+                Visibility = Visibility.Collapsed // Initially hidden
+            };
+            
+            // Create glowing tip - a small bright ellipse
+            _glowingTip = new Ellipse
+            {
+                Width = 8 * _uiScale,
+                Height = 8 * _uiScale,
+                Fill = new RadialGradientBrush
+                {
+                    GradientStops = new GradientStopCollection
+                    {
+                        new GradientStop(Color.FromArgb(255, 120, 200, 255), 0.0), // Bright cyan center
+                        new GradientStop(Color.FromArgb(150, 45, 125, 210), 0.5),  // Blue middle
+                        new GradientStop(Colors.Transparent, 1.0) // Transparent edge
+                    }
+                },
+                Effect = new BlurEffect { Radius = 5 }
+            };
+            
+            // Position the glowing tip on the right edge of the container (will rotate around)
+            Canvas.SetLeft(_glowingTip, ringRadius * 2 - (_glowingTip.Width / 2));
+            Canvas.SetTop(_glowingTip, ringRadius - (_glowingTip.Height / 2));
+            _glowingTipContainer.Children.Add(_glowingTip);
+            
+            // Position the container at center
+            Canvas.SetLeft(_glowingTipContainer, centerX - ringRadius);
+            Canvas.SetTop(_glowingTipContainer, centerY - ringRadius);
+            
+            // Add to canvas (behind menu items)
+            _canvas.Children.Add(_spinningRing);
+            _canvas.Children.Add(_glowingTipContainer);
+            
+            // Create the rotation animation
+            CreateSpinningAnimation();
+        }
+
+        private void CreateSpinningAnimation()
+        {
+            // Create the storyboard for continuous rotation
+            _spinningAnimation = new Storyboard();
+
+            // Animation for the ring rotation
+            var ringAnimation = new DoubleAnimation
+            {
+                From = 0,
+                To = 360,
+                Duration = TimeSpan.FromSeconds(4), // Slower, more relaxed rotation
+                RepeatBehavior = RepeatBehavior.Forever
+            };
+            Storyboard.SetTarget(ringAnimation, _spinningRing);
+            Storyboard.SetTargetProperty(ringAnimation, new PropertyPath("RenderTransform.Angle"));
+
+            // Animation for the glowing tip container - same rotation
+            var tipAnimation = new DoubleAnimation
+            {
+                From = 0,
+                To = 360,
+                Duration = TimeSpan.FromSeconds(4), // Same duration as ring
+                RepeatBehavior = RepeatBehavior.Forever
+            };
+            
+            Storyboard.SetTarget(tipAnimation, _glowingTipContainer);
+            Storyboard.SetTargetProperty(tipAnimation, new PropertyPath("RenderTransform.Angle"));
+
+            // Animation for the glowing tip pulsing - adds extra visual interest
+            var pulseAnimation = new DoubleAnimation
+            {
+                From = 0.6,
+                To = 1.0,
+                Duration = TimeSpan.FromSeconds(1), // Fast pulse
+                AutoReverse = true,
+                RepeatBehavior = RepeatBehavior.Forever
+            };
+            
+            Storyboard.SetTarget(pulseAnimation, _glowingTip);
+            Storyboard.SetTargetProperty(pulseAnimation, new PropertyPath("Opacity"));
+
+            // Add animations to storyboard
+            _spinningAnimation.Children.Add(ringAnimation);
+            _spinningAnimation.Children.Add(tipAnimation);
+            _spinningAnimation.Children.Add(pulseAnimation);
         }
 
         private List<ConfigItem> ConvertMenuItems(System.Collections.ObjectModel.ObservableCollection<Models.MenuItemConfig> menuItems)
@@ -224,6 +366,27 @@ namespace RadialMenu
         public void ReloadConfiguration()
         {
             LoadConfiguration();
+            
+            // Load and apply appearance settings
+            try
+            {
+                if (System.Windows.Application.Current is App app && app.SettingsService != null)
+                {
+                    var settings = app.SettingsService.Load();
+                    if (settings?.Appearance != null)
+                    {
+                        UpdateUIScale(settings.Appearance.UiScale > 0 ? settings.Appearance.UiScale : 1.0);
+                        UpdateRadii(
+                            settings.Appearance.InnerRadius > 0 ? settings.Appearance.InnerRadius : 40,
+                            settings.Appearance.OuterRadius > 0 ? settings.Appearance.OuterRadius : 220
+                        );
+                        UpdateCenterText(settings.Appearance.CenterText);
+                        UpdateTheme(settings.Appearance.Theme);
+                    }
+                }
+            }
+            catch { }
+            
             // If the menu is visible, reload the root menu items so changes appear immediately
             if (IsVisible)
             {
@@ -235,7 +398,23 @@ namespace RadialMenu
                     var created = LoadMenuItems(itemsToLoad, null);
                     _menuStack.Clear();
                     _menuStack.Push(new MenuLevel { Items = itemsToLoad, Name = "MENU", CreatedNodes = created, Origin = null });
-                    _centerText.Text = "MENU";
+                    
+                    // Load center text from settings or use default
+                    var centerText = "MENU";
+                    try
+                    {
+                        if (System.Windows.Application.Current is App app && app.SettingsService != null)
+                        {
+                            var settings = app.SettingsService.Load();
+                            if (!string.IsNullOrEmpty(settings?.Appearance?.CenterText))
+                            {
+                                centerText = settings.Appearance.CenterText;
+                            }
+                        }
+                    }
+                    catch { }
+                    
+                    _centerText.Text = centerText;
                     PositionCenterElements();
                 }
                 catch { }
@@ -362,12 +541,29 @@ namespace RadialMenu
             var itemsToLoad = _config?.Items ?? new List<ConfigItem>();
             var created = LoadMenuItems(itemsToLoad, null);
             Log($"LoadMenuItems returned {created?.Count ?? 0} created nodes.");
-            _menuStack.Push(new MenuLevel { Items = itemsToLoad, Name = "MENU", CreatedNodes = created, Origin = null });
-            _centerText.Text = "MENU";
+            // Load center text from settings
+            var centerText = "MENU";
+            try
+            {
+                if (System.Windows.Application.Current is App app && app.SettingsService != null)
+                {
+                    var settings = app.SettingsService.Load();
+                    if (!string.IsNullOrEmpty(settings?.Appearance?.CenterText))
+                    {
+                        centerText = settings.Appearance.CenterText;
+                    }
+                }
+            }
+            catch { }
+            
+            _menuStack.Push(new MenuLevel { Items = itemsToLoad, Name = centerText, CreatedNodes = created, Origin = null });
+            _centerText.Text = centerText;
 
             // Re-center center text after text change
             PositionCenterElements();
 
+            // Set opacity to 0 before showing to prevent flash
+            Opacity = 0;
             Show();
             Activate();
             AnimateIn();
@@ -429,16 +625,40 @@ namespace RadialMenu
                     StrokeThickness = 2
                 };
 
-                // Place ellipse at target but animate from origin
+                // Place ellipse at target position
                 Canvas.SetLeft(ellipse, targetX - nodeSize / 2);
                 Canvas.SetTop(ellipse, targetY - nodeSize / 2);
-                var translate = new TranslateTransform(originPoint.X - targetX, originPoint.Y - targetY);
-                var scale = new ScaleTransform(0.3, 0.3);
-                var tg = new TransformGroup();
-                tg.Children.Add(scale);
-                tg.Children.Add(translate);
-                ellipse.RenderTransform = tg;
-                ellipse.RenderTransformOrigin = new Point(0.5, 0.5);
+
+                // For root menu (origin == null), items appear directly in position without animation
+                // For submenu items, animate from origin to target position
+                if (origin == null)
+                {
+                    // No animation for root menu - items appear in final position immediately
+                    ellipse.RenderTransform = new TransformGroup(); // Empty transform group for consistency
+                    ellipse.RenderTransformOrigin = new Point(0.5, 0.5); // Ensure scaling from center
+                }
+                else
+                {
+                    // Animate submenu items from origin to target
+                    var initialTranslateX = originPoint.X - targetX;
+                    var initialTranslateY = originPoint.Y - targetY;
+                    var translate = new TranslateTransform(initialTranslateX, initialTranslateY);
+                    var scale = new ScaleTransform(0.3, 0.3);
+                    var tg = new TransformGroup();
+                    tg.Children.Add(scale);
+                    tg.Children.Add(translate);
+                    ellipse.RenderTransform = tg;
+                    ellipse.RenderTransformOrigin = new Point(0.5, 0.5);
+
+                    // Animate translate and scale from origin to target
+                    var animX = new DoubleAnimation(initialTranslateX, 0, TimeSpan.FromMilliseconds(320)) { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut } };
+                    var animY = new DoubleAnimation(initialTranslateY, 0, TimeSpan.FromMilliseconds(320)) { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut } };
+                    var animScale = new DoubleAnimation(0.3, 1.0, TimeSpan.FromMilliseconds(320)) { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut } };
+                    translate.BeginAnimation(TranslateTransform.XProperty, animX);
+                    translate.BeginAnimation(TranslateTransform.YProperty, animY);
+                    scale.BeginAnimation(ScaleTransform.ScaleXProperty, animScale);
+                    scale.BeginAnimation(ScaleTransform.ScaleYProperty, animScale);
+                }
 
                 // Add subtle glow
                 ellipse.Effect = new DropShadowEffect { Color = itemColor, BlurRadius = 12, ShadowDepth = 0, Opacity = 0 };
@@ -465,15 +685,6 @@ namespace RadialMenu
                 Canvas.SetTop(label, targetY - labelSize.Height / 2);
                 _canvas.Children.Add(label);
                 Panel.SetZIndex(label, 3);
-
-                // Animate translate and scale to origin -> target
-                var animX = new DoubleAnimation(originPoint.X - targetX, 0, TimeSpan.FromMilliseconds(320)) { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut } };
-                var animY = new DoubleAnimation(originPoint.Y - targetY, 0, TimeSpan.FromMilliseconds(320)) { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut } };
-                var animScale = new DoubleAnimation(0.3, 1.0, TimeSpan.FromMilliseconds(320)) { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut } };
-                translate.BeginAnimation(TranslateTransform.XProperty, animX);
-                translate.BeginAnimation(TranslateTransform.YProperty, animY);
-                scale.BeginAnimation(ScaleTransform.ScaleXProperty, animScale);
-                scale.BeginAnimation(ScaleTransform.ScaleYProperty, animScale);
 
                 var menuItem = new RadialMenuItem
                 {
@@ -639,9 +850,9 @@ namespace RadialMenu
                 line.BeginAnimation(System.Windows.Shapes.Line.Y2Property, y2Anim);
 
                 // animate translate and scale with springy elastic ease
-                var animX = new DoubleAnimation(originalParentCenter.X - targetX, 0, TimeSpan.FromMilliseconds(520)) { EasingFunction = new ElasticEase { Oscillations = 2, Springiness = 8, EasingMode = EasingMode.EaseOut } };
-                var animY = new DoubleAnimation(originalParentCenter.Y - targetY, 0, TimeSpan.FromMilliseconds(520)) { EasingFunction = new ElasticEase { Oscillations = 2, Springiness = 8, EasingMode = EasingMode.EaseOut } };
-                var animScale = new DoubleAnimation(0.3, 1.0, TimeSpan.FromMilliseconds(520)) { EasingFunction = new ElasticEase { Oscillations = 2, Springiness = 8, EasingMode = EasingMode.EaseOut } };
+                var animX = new DoubleAnimation(originalParentCenter.X - targetX, 0, TimeSpan.FromMilliseconds(520)) { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.5 } };
+                var animY = new DoubleAnimation(originalParentCenter.Y - targetY, 0, TimeSpan.FromMilliseconds(520)) { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.5 } };
+                var animScale = new DoubleAnimation(0.3, 1.0, TimeSpan.FromMilliseconds(520)) { EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.5 } };
                 translate.BeginAnimation(TranslateTransform.XProperty, animX);
                 translate.BeginAnimation(TranslateTransform.YProperty, animY);
                 scale.BeginAnimation(ScaleTransform.ScaleXProperty, animScale);
@@ -1173,29 +1384,39 @@ namespace RadialMenu
         private void AnimateIn()
         {
             _isAnimating = true;
-            Opacity = 0;
+            // Opacity should already be set to 0 before Show() is called
             var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200));
             fadeIn.Completed += (s, e) => _isAnimating = false;
             BeginAnimation(OpacityProperty, fadeIn);
 
-            // Animate menu items
+            // Start the spinning animation
+            StartSpinningAnimation();
+
+            // Skip individual item animations for root menu (items are already positioned correctly)
+            // Only animate submenu items that already have transforms from LoadMenuItems
             foreach (var item in _menuItems)
             {
-                var transform = new ScaleTransform(0.5, 0.5, _centerPoint.X, _centerPoint.Y);
-                item.Visual.RenderTransform = transform;
-                
-                var scaleAnim = new DoubleAnimation(0.5, 1, TimeSpan.FromMilliseconds(300))
+                // Check if item already has animation transforms (submenu items)
+                if (item.Visual.RenderTransform is TransformGroup tg && 
+                    tg.Children.OfType<TranslateTransform>().Any() && 
+                    tg.Children.OfType<ScaleTransform>().Any())
                 {
-                    EasingFunction = new BackEase { EasingMode = EasingMode.EaseOut, Amplitude = 0.5 }
-                };
-                transform.BeginAnimation(ScaleTransform.ScaleXProperty, scaleAnim);
-                transform.BeginAnimation(ScaleTransform.ScaleYProperty, scaleAnim);
+                    // Item already has animation setup from LoadMenuItems - let it continue
+                    continue;
+                }
+                
+                // For root menu items that don't have existing animations, just ensure they're visible
+                // No additional scaling animation needed since they should appear in final position immediately
             }
         }
 
         private void AnimateOut(Action onComplete)
         {
             _isAnimating = true;
+            
+            // Stop the spinning animation
+            StopSpinningAnimation();
+            
             var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(150));
             fadeOut.Completed += (s, e) =>
             {
@@ -1221,6 +1442,33 @@ namespace RadialMenu
                 _canvas.BeginAnimation(OpacityProperty, fadeIn);
             };
             _canvas.BeginAnimation(OpacityProperty, fadeOut);
+        }
+
+        private void StartSpinningAnimation()
+        {
+            if (_spinningAnimation != null && _spinningRing != null && _glowingTipContainer != null)
+            {
+                // Make the animation elements visible
+                _spinningRing.Visibility = Visibility.Visible;
+                _glowingTipContainer.Visibility = Visibility.Visible;
+                
+                // Start the animation
+                _spinningAnimation.Begin();
+            }
+        }
+
+        private void StopSpinningAnimation()
+        {
+            if (_spinningAnimation != null)
+            {
+                _spinningAnimation.Stop();
+                
+                // Hide the animation elements
+                if (_spinningRing != null)
+                    _spinningRing.Visibility = Visibility.Collapsed;
+                if (_glowingTipContainer != null)
+                    _glowingTipContainer.Visibility = Visibility.Collapsed;
+            }
         }
 
         // Ensure center circle and text are perfectly centered around _centerPoint
@@ -1344,6 +1592,112 @@ namespace RadialMenu
             this.Height = Math.Max(this.Height, newHeight);
 
             return new Point(extraLeft, extraTop);
+        }
+
+        // Dynamic appearance update methods
+        public void UpdateUIScale(double newScale)
+        {
+            if (newScale <= 0) return;
+            
+            _uiScale = newScale;
+            
+            // If window is visible, we need to hide it first to resize (due to AllowsTransparency)
+            bool wasVisible = IsVisible;
+            if (wasVisible)
+            {
+                Hide();
+            }
+            
+            // Update window and canvas sizes
+            Width = 1800 * _uiScale;
+            Height = 1800 * _uiScale;
+            _canvas.Width = Width;
+            _canvas.Height = Height;
+            
+            // Recalculate center point
+            _centerPoint = new Point(Width / 2, Height / 2);
+            
+            // Update center circle size and position
+            if (_centerCircle != null)
+            {
+                _centerCircle.Width = (_innerRadius * 2) * _uiScale;
+                _centerCircle.Height = (_innerRadius * 2) * _uiScale;
+            }
+            
+            // Update center text positioning and size
+            if (_centerText != null)
+            {
+                _centerText.FontSize = 16 * _uiScale;
+                Canvas.SetLeft(_centerText, (Width / 2) - 20 * _uiScale);
+                Canvas.SetTop(_centerText, (Height / 2) - 8 * _uiScale);
+            }
+            
+            // Reposition center elements and recreate menu items if menu is loaded
+            if (_menuStack.Count > 0)
+            {
+                PositionCenterElements();
+                // Recreate menu items with new scaling
+                var currentLevel = _menuStack.Peek();
+                var created = LoadMenuItems(currentLevel.Items, null);
+                currentLevel.CreatedNodes = created;
+            }
+            
+            // Show window again if it was visible
+            if (wasVisible)
+            {
+                Show();
+            }
+        }
+
+        public void UpdateRadii(double innerRadius, double outerRadius)
+        {
+            if (innerRadius <= 0 || outerRadius <= innerRadius) return;
+            
+            _innerRadius = innerRadius;
+            _outerRadius = outerRadius;
+            
+            // Update center circle size
+            if (_centerCircle != null)
+            {
+                _centerCircle.Width = (_innerRadius * 2) * _uiScale;
+                _centerCircle.Height = (_innerRadius * 2) * _uiScale;
+            }
+            
+            // Recreate menu items with new radii if menu is loaded
+            if (_menuStack.Count > 0)
+            {
+                PositionCenterElements();
+                var currentLevel = _menuStack.Peek();
+                var created = LoadMenuItems(currentLevel.Items, null);
+                currentLevel.CreatedNodes = created;
+            }
+        }
+
+        public void UpdateCenterText(string text)
+        {
+            // Update center text if we're at root level
+            if (_centerText != null && _menuStack.Count <= 1)
+            {
+                _centerText.Text = text ?? "MENU";
+            }
+        }
+
+        public void UpdateTheme(string theme)
+        {
+            // TODO: Apply theme to the application resources
+            // var app = Application.Current as RadialMenu.App;
+            // if (app != null)
+            // {
+            //     app.ApplyTheme(theme);
+            // }
+
+            // Recreate menu items to pick up any color changes
+            if (_menuStack.Count > 0)
+            {
+                var currentLevel = _menuStack.Peek();
+                var created = LoadMenuItems(currentLevel.Items, null);
+                currentLevel.CreatedNodes = created;
+            }
         }
     }
 

@@ -24,14 +24,56 @@ namespace RadialMenu.Models
         public string Toggle { get; set; } = "Win+F12";
     }
 
-    public class Appearance
+    public class Appearance : INotifyPropertyChanged
     {
-        public double UiScale { get; set; } = 1.0;
-        public double InnerRadius { get; set; } = 40;
-        public double OuterRadius { get; set; } = 220;
-        public string Theme { get; set; } = "dark";
-        public string CenterText { get; set; } = "MENU";
-        public Dictionary<string, string> Colors { get; set; } = new Dictionary<string, string>();
+        private double _uiScale = 1.0;
+        private double _innerRadius = 40;
+        private double _outerRadius = 220;
+        private string _theme = "dark";
+        private string _centerText = "MENU";
+        private Dictionary<string, string> _colors = new Dictionary<string, string>();
+
+        public double UiScale 
+        { 
+            get => _uiScale; 
+            set { _uiScale = value; OnPropertyChanged(); } 
+        }
+        
+        public double InnerRadius 
+        { 
+            get => _innerRadius; 
+            set { _innerRadius = value; OnPropertyChanged(); } 
+        }
+        
+        public double OuterRadius 
+        { 
+            get => _outerRadius; 
+            set { _outerRadius = value; OnPropertyChanged(); } 
+        }
+        
+        public string Theme 
+        { 
+            get => _theme; 
+            set { _theme = value; OnPropertyChanged(); } 
+        }
+        
+        public string CenterText 
+        { 
+            get => _centerText; 
+            set { _centerText = value; OnPropertyChanged(); } 
+        }
+        
+        public Dictionary<string, string> Colors 
+        { 
+            get => _colors; 
+            set { _colors = value; OnPropertyChanged(); } 
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected void OnPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string? propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 
     public class MenuItemConfig : INotifyPropertyChanged

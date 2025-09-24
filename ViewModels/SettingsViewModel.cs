@@ -59,8 +59,6 @@ namespace RadialMenu.ViewModels
             DuplicateMenuItemCommand = new RelayCommand(_ => DuplicateMenuItem(), _ => SelectedMenuItem != null);
             DeleteMenuItemCommand = new RelayCommand(_ => DeleteMenuItem(), _ => SelectedMenuItem != null);
 
-            MoveUpCommand = new RelayCommand(_ => MoveUp(), _ => CanMoveUp());
-            MoveDownCommand = new RelayCommand(_ => MoveDown(), _ => CanMoveDown());
             IndentCommand = new RelayCommand(_ => Indent(), _ => CanIndent());
             OutdentCommand = new RelayCommand(_ => Outdent(), _ => CanOutdent());
 
@@ -68,10 +66,15 @@ namespace RadialMenu.ViewModels
             ImportCommand = new RelayCommand(_ => ImportRequested?.Invoke());
             ExportCommand = new RelayCommand(_ => ExportRequested?.Invoke());
             TestActionCommand = new RelayCommand(_ => TestAction(), _ => SelectedMenuItem != null);
+            SelectIconCommand = new RelayCommand(SelectIcon);
+            BulkChangeColorCommand = new RelayCommand(_ => BulkChangeColor(), _ => SelectedMenuItems.Count > 0);
 
             // Load settings safely
             try { _working = _settingsService.Load() ?? new Settings(); } catch { _working = new Settings(); }
             if (_working.Menu == null) _working.Menu = new ObservableCollection<MenuItemConfig>();
+
+            // Subscribe to appearance property changes to enable IsDirty state
+            _working.Appearance.PropertyChanged += OnAppearancePropertyChanged;
 
             Log($"Loaded settings with {_working.Menu.Count} menu items");
 
@@ -92,8 +95,18 @@ namespace RadialMenu.ViewModels
             get => _working;
             set
             {
+                // Unsubscribe from old appearance events
+                if (_working?.Appearance != null)
+                {
+                    _working.Appearance.PropertyChanged -= OnAppearancePropertyChanged;
+                }
+
                 _working = value ?? new Settings();
                 if (_working.Menu == null) _working.Menu = new ObservableCollection<MenuItemConfig>();
+                
+                // Subscribe to new appearance events
+                _working.Appearance.PropertyChanged += OnAppearancePropertyChanged;
+                
                 OnPropertyChanged();
             }
         }
@@ -135,8 +148,6 @@ namespace RadialMenu.ViewModels
         public RelayCommand DuplicateMenuItemCommand { get; }
         public RelayCommand DeleteMenuItemCommand { get; }
 
-        public RelayCommand MoveUpCommand { get; }
-        public RelayCommand MoveDownCommand { get; }
         public RelayCommand IndentCommand { get; }
         public RelayCommand OutdentCommand { get; }
 
@@ -144,11 +155,16 @@ namespace RadialMenu.ViewModels
         public RelayCommand ImportCommand { get; }
         public RelayCommand ExportCommand { get; }
         public RelayCommand TestActionCommand { get; }
+        public RelayCommand SelectIconCommand { get; }
+        public RelayCommand BulkChangeColorCommand { get; }
 
         public System.Collections.Generic.List<string> ActionTypes { get; } = new() { "None", "launch", "run" };
         
         // Color palette for menu item colors
         public System.Collections.Generic.List<ColorOption> AvailableColors { get; } = ColorPalette.PredefinedColors;
+
+        // Icon palette for menu item icons
+        public System.Collections.Generic.List<IconOption> AvailableIcons { get; } = IconPalette.PredefinedIcons;
 
         public event Action? MenuChanged;
         public event Action<string>? NavigateRequested;
@@ -170,6 +186,32 @@ namespace RadialMenu.ViewModels
                 OnPropertyChanged(nameof(SelectedColor));
                 DuplicateMenuItemCommand?.RaiseCanExecuteChanged();
                 DeleteMenuItemCommand?.RaiseCanExecuteChanged();
+            }
+        }
+
+        private ObservableCollection<MenuItemConfig> _selectedMenuItems = new ObservableCollection<MenuItemConfig>();
+        public ObservableCollection<MenuItemConfig> SelectedMenuItems 
+        { 
+            get => _selectedMenuItems; 
+            set 
+            { 
+                _selectedMenuItems = value; 
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(HasMultipleSelected));
+                BulkChangeColorCommand?.RaiseCanExecuteChanged();
+            } 
+        }
+
+        public bool HasMultipleSelected => SelectedMenuItems.Count > 1;
+
+        private ColorOption _bulkColor = ColorPalette.GetDefaultColor();
+        public ColorOption BulkColor
+        {
+            get => _bulkColor;
+            set
+            {
+                _bulkColor = value;
+                OnPropertyChanged();
             }
         }
 
@@ -196,7 +238,33 @@ namespace RadialMenu.ViewModels
             PushSnapshot();
         }
 
+        private void OnAppearancePropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            PushSnapshot();
+        }
+
         public void SelectMenuItem(MenuItemConfig? item) => SelectedMenuItem = item;
+        
+        public void ToggleMenuItemSelection(MenuItemConfig item)
+        {
+            if (SelectedMenuItems.Contains(item))
+            {
+                SelectedMenuItems.Remove(item);
+            }
+            else
+            {
+                SelectedMenuItems.Add(item);
+            }
+            OnPropertyChanged(nameof(HasMultipleSelected));
+            BulkChangeColorCommand?.RaiseCanExecuteChanged();
+        }
+
+        public void ClearMultiSelection()
+        {
+            SelectedMenuItems.Clear();
+            OnPropertyChanged(nameof(HasMultipleSelected));
+            BulkChangeColorCommand?.RaiseCanExecuteChanged();
+        }
 
         private void AddMenuItem()
         {
@@ -231,28 +299,17 @@ namespace RadialMenu.ViewModels
             MenuChanged?.Invoke();
         }
 
-        private void MoveUp()
+        private void BulkChangeColor()
         {
-            if (SelectedMenuItem == null) return;
+            if (SelectedMenuItems.Count == 0) return;
             PushSnapshot();
-            var index = Working.Menu.IndexOf(SelectedMenuItem);
-            if (index > 0)
+            
+            foreach (var item in SelectedMenuItems)
             {
-                Working.Menu.Move(index, index - 1);
-                MenuChanged?.Invoke();
+                item.Color = BulkColor.HexValue;
             }
-        }
-
-        private void MoveDown()
-        {
-            if (SelectedMenuItem == null) return;
-            PushSnapshot();
-            var index = Working.Menu.IndexOf(SelectedMenuItem);
-            if (index < Working.Menu.Count - 1)
-            {
-                Working.Menu.Move(index, index + 1);
-                MenuChanged?.Invoke();
-            }
+            
+            MenuChanged?.Invoke();
         }
 
         private void Indent()
@@ -332,6 +389,14 @@ namespace RadialMenu.ViewModels
             catch (Exception ex)
             {
                 Log($"TestAction failed: {ex.Message}");
+            }
+        }
+
+        private void SelectIcon(object? iconOption)
+        {
+            if (SelectedMenuItem != null && iconOption is IconOption icon)
+            {
+                SelectedMenuItem.Icon = icon.Emoji;
             }
         }
 
@@ -429,10 +494,6 @@ namespace RadialMenu.ViewModels
         private void OnPropertyChanged([CallerMemberName] string? name = null) => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
 
         public void NotifyMenuChanged() => MenuChanged?.Invoke();
-
-        private bool CanMoveUp() => SelectedMenuItem != null && Working.Menu.IndexOf(SelectedMenuItem) > 0;
-
-        private bool CanMoveDown() => SelectedMenuItem != null && Working.Menu.IndexOf(SelectedMenuItem) < Working.Menu.Count - 1;
 
         private bool CanIndent() => SelectedMenuItem != null && Working.Menu.Contains(SelectedMenuItem) && Working.Menu.IndexOf(SelectedMenuItem) > 0;
 

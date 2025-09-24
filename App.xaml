@@ -4,16 +4,47 @@
              ShutdownMode="OnExplicitShutdown">
     <Application.Resources>
         <ResourceDictionary>
-            <!-- Modern color scheme -->
+            <!-- Theme Resources -->
+            <ResourceDictionary x:Key="DarkTheme">
+                <Color x:Key="AccentColor">#FF2D7DD2</Color>
+                <Color x:Key="BackgroundColor">#E6000000</Color>
+                <Color x:Key="HoverColor">#FF45A5FF</Color>
+                <Color x:Key="TextColor">#FFFFFFFF</Color>
+                <Color x:Key="SecondaryColor">#FF404040</Color>
+                
+                <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}"/>
+                <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource BackgroundColor}"/>
+                <SolidColorBrush x:Key="HoverBrush" Color="{StaticResource HoverColor}"/>
+                <SolidColorBrush x:Key="TextBrush" Color="{StaticResource TextColor}"/>
+                <SolidColorBrush x:Key="SecondaryBrush" Color="{StaticResource SecondaryColor}"/>
+            </ResourceDictionary>
+            
+            <ResourceDictionary x:Key="LightTheme">
+                <Color x:Key="AccentColor">#FF2D7DD2</Color>
+                <Color x:Key="BackgroundColor">#F0FFFFFF</Color>
+                <Color x:Key="HoverColor">#FF1565C0</Color>
+                <Color x:Key="TextColor">#FF000000</Color>
+                <Color x:Key="SecondaryColor">#FFE0E0E0</Color>
+                
+                <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}"/>
+                <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource BackgroundColor}"/>
+                <SolidColorBrush x:Key="HoverBrush" Color="{StaticResource HoverColor}"/>
+                <SolidColorBrush x:Key="TextBrush" Color="{StaticResource TextColor}"/>
+                <SolidColorBrush x:Key="SecondaryBrush" Color="{StaticResource SecondaryColor}"/>
+            </ResourceDictionary>
+            
+            <!-- Default to dark theme -->
             <Color x:Key="AccentColor">#FF2D7DD2</Color>
             <Color x:Key="BackgroundColor">#E6000000</Color>
             <Color x:Key="HoverColor">#FF45A5FF</Color>
             <Color x:Key="TextColor">#FFFFFFFF</Color>
+            <Color x:Key="SecondaryColor">#FF404040</Color>
             
             <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}"/>
             <SolidColorBrush x:Key="BackgroundBrush" Color="{StaticResource BackgroundColor}"/>
             <SolidColorBrush x:Key="HoverBrush" Color="{StaticResource HoverColor}"/>
             <SolidColorBrush x:Key="TextBrush" Color="{StaticResource TextColor}"/>
+            <SolidColorBrush x:Key="SecondaryBrush" Color="{StaticResource SecondaryColor}"/>
 
             <!-- Modern button style -->
             <Style x:Key="ModernButton" TargetType="Button">
