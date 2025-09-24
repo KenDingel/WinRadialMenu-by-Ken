@@ -168,7 +168,10 @@
                             BorderThickness="{TemplateBinding BorderThickness}"
                             CornerRadius="8"
                             Effect="{StaticResource ElevationShadow1}">
-                        <ScrollViewer Padding="{TemplateBinding Padding}">
+                        <ScrollViewer Padding="{TemplateBinding Padding}"
+                                      VerticalScrollBarVisibility="Auto"
+                                      HorizontalScrollBarVisibility="Auto"
+                                      CanContentScroll="True">
                             <ItemsPresenter/>
                         </ScrollViewer>
                     </Border>

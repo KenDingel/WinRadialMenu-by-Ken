@@ -38,6 +38,8 @@
                       PreviewMouseLeftButtonDown="TreeView_PreviewMouseLeftButtonDown"
                       PreviewMouseMove="TreeView_PreviewMouseMove"
                       Drop="TreeView_Drop"
+                      PreviewMouseDoubleClick="TreeView_PreviewMouseDoubleClick"
+                      MouseUp="TreeView_MouseUp"
                       Style="{StaticResource ModernTreeViewStyle}">
                 <TreeView.ItemContainerStyle>
                     <Style TargetType="TreeViewItem" BasedOn="{StaticResource ModernTreeViewItemStyle}"/>
