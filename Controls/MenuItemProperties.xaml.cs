@@ -68,6 +68,16 @@ namespace RadialMenu.Controls
                     // Trigger the binding update
                     var bindingExpression = textBox.GetBindingExpression(TextBox.TextProperty);
                     bindingExpression?.UpdateSource();
+                    
+                    // Auto-set action type to "launch" for EXE files
+                    if (DataContext is ViewModels.SettingsViewModel viewModel && viewModel.SelectedMenuItem != null)
+                    {
+                        if (string.IsNullOrEmpty(viewModel.SelectedMenuItem.Action) || 
+                            viewModel.SelectedMenuItem.Action == "None")
+                        {
+                            viewModel.SelectedMenuItem.Action = "launch";
+                        }
+                    }
                 }
             }
             
@@ -94,6 +104,20 @@ namespace RadialMenu.Controls
                 // Trigger the binding update
                 var bindingExpression = pathTextBox.GetBindingExpression(TextBox.TextProperty);
                 bindingExpression?.UpdateSource();
+                
+                // Auto-set action type to "launch" for EXE files
+                var extension = Path.GetExtension(openFileDialog.FileName);
+                if ((extension.Equals(".exe", StringComparison.OrdinalIgnoreCase) || 
+                     extension.Equals(".lnk", StringComparison.OrdinalIgnoreCase)) &&
+                    DataContext is ViewModels.SettingsViewModel viewModel && 
+                    viewModel.SelectedMenuItem != null)
+                {
+                    if (string.IsNullOrEmpty(viewModel.SelectedMenuItem.Action) || 
+                        viewModel.SelectedMenuItem.Action == "None")
+                    {
+                        viewModel.SelectedMenuItem.Action = "launch";
+                    }
+                }
             }
         }
     }

@@ -20,9 +20,21 @@ namespace RadialMenu.Models
         public DateTime LastModified { get; set; } = DateTime.UtcNow;
     }
 
-    public class Hotkeys
+    public class Hotkeys : INotifyPropertyChanged
     {
-        public string Toggle { get; set; } = "Win+F12";
+        private string _toggle = "Win+F12";
+
+        public string Toggle 
+        { 
+            get => _toggle; 
+            set { _toggle = value; OnPropertyChanged(); } 
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected void OnPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string? propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 
     public class ExternalTools
@@ -37,6 +49,7 @@ namespace RadialMenu.Models
         private double _outerRadius = 220;
         private string _theme = "dark";
         private string _centerText = "MENU";
+        private bool _particlesEnabled = false;
         private Dictionary<string, string> _colors = new Dictionary<string, string>();
 
         public double UiScale 
@@ -67,6 +80,12 @@ namespace RadialMenu.Models
         { 
             get => _centerText; 
             set { _centerText = value; OnPropertyChanged(); } 
+        }
+        
+        public bool ParticlesEnabled 
+        { 
+            get => _particlesEnabled; 
+            set { _particlesEnabled = value; OnPropertyChanged(); } 
         }
         
         public Dictionary<string, string> Colors 

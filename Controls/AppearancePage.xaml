@@ -32,6 +32,7 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
                 
                 <!-- UI Scale Section -->
@@ -176,8 +177,36 @@
                     </StackPanel>
                 </Border>
 
-                <!-- Preview Section -->
+                <!-- Particle Settings -->
                 <Border Grid.Row="3" 
+                        Background="{StaticResource SurfaceBrush}" 
+                        CornerRadius="8" 
+                        Margin="0,0,0,16"
+                        Effect="{StaticResource ElevationShadow1}">
+                    <StackPanel Margin="20,16">
+                        <TextBlock Text="Particle Effects" 
+                                   FontSize="18" 
+                                   FontWeight="Medium" 
+                                   Foreground="{StaticResource OnSurfaceBrush}"
+                                   FontFamily="{StaticResource PrimaryFontFamily}"
+                                   Margin="0,0,0,8"/>
+                        <TextBlock Text="Control visual particle effects in the menu" 
+                                   FontSize="12" 
+                                   Foreground="{StaticResource OnSurfaceSecondaryBrush}"
+                                   FontFamily="{StaticResource PrimaryFontFamily}"
+                                   Margin="0,0,0,16"/>
+                        
+                        <CheckBox Content="Enable Particle Effects" 
+                                  IsChecked="{Binding Working.Appearance.ParticlesEnabled, Mode=TwoWay}" 
+                                  FontFamily="{StaticResource PrimaryFontFamily}"
+                                  FontWeight="Medium"
+                                  Foreground="{StaticResource OnSurfaceBrush}"
+                                  Style="{StaticResource ModernCheckBoxStyle}"/>
+                    </StackPanel>
+                </Border>
+
+                <!-- Preview Section -->
+                <Border Grid.Row="4" 
                         Background="{StaticResource AccentTransparentBrush}" 
                         CornerRadius="8" 
                         Margin="0,0,0,0"

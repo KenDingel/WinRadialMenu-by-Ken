@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -15,6 +16,38 @@ namespace RadialMenu.Controls
             set => SetValue(HotkeyProperty, value);
         }
 
+        // Dictionary to map system key names to friendly display names
+        private static readonly Dictionary<Key, string> KeyDisplayNames = new Dictionary<Key, string>
+        {
+            { Key.Oem3, "~" },           // Tilde
+            { Key.Oem1, ";" },           // Semicolon
+            { Key.OemPlus, "=" },        // Equals
+            { Key.OemMinus, "-" },       // Minus
+            { Key.OemOpenBrackets, "[" }, // Left bracket
+            { Key.OemCloseBrackets, "]" }, // Right bracket
+            { Key.OemPipe, "\\" },       // Backslash
+            { Key.OemQuotes, "'" },      // Quote
+            { Key.OemComma, "," },       // Comma
+            { Key.OemPeriod, "." },      // Period
+            { Key.OemQuestion, "/" },    // Forward slash
+            { Key.Space, "Space" },
+            { Key.Tab, "Tab" },
+            { Key.Enter, "Enter" },
+            { Key.Back, "Backspace" },
+            { Key.Delete, "Delete" },
+            { Key.Insert, "Insert" },
+            { Key.Home, "Home" },
+            { Key.End, "End" },
+            { Key.PageUp, "PageUp" },
+            { Key.PageDown, "PageDown" },
+            { Key.Escape, "Esc" },
+            { Key.PrintScreen, "PrtScn" },
+            { Key.Pause, "Pause" },
+            { Key.CapsLock, "CapsLock" },
+            { Key.NumLock, "NumLock" },
+            { Key.Scroll, "ScrollLock" }
+        };
+
         public HotkeyCaptureControl()
         {
             InitializeComponent();
@@ -26,7 +59,7 @@ namespace RadialMenu.Controls
         private void HotkeyBox_PreviewKeyDown(object sender, KeyEventArgs e)
         {
             e.Handled = true;
-            var parts = new System.Collections.Generic.List<string>();
+            var parts = new List<string>();
             if ((Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control) parts.Add("Ctrl");
             if ((Keyboard.Modifiers & ModifierKeys.Alt) == ModifierKeys.Alt) parts.Add("Alt");
             if ((Keyboard.Modifiers & ModifierKeys.Windows) == ModifierKeys.Windows) parts.Add("Win");
@@ -36,7 +69,9 @@ namespace RadialMenu.Controls
             if (key != Key.LeftCtrl && key != Key.RightCtrl && key != Key.LeftAlt && key != Key.RightAlt &&
                 key != Key.LeftShift && key != Key.RightShift && key != Key.LWin && key != Key.RWin)
             {
-                parts.Add(key.ToString());
+                // Use friendly name if available, otherwise use the default key name
+                string keyName = KeyDisplayNames.ContainsKey(key) ? KeyDisplayNames[key] : key.ToString();
+                parts.Add(keyName);
             }
 
             Hotkey = string.Join("+", parts);

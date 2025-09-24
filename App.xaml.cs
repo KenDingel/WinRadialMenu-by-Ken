@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
@@ -42,6 +43,7 @@ namespace RadialMenu
                     try
                     {
                         _radialMenu?.ReloadConfiguration();
+                        RegisterHotkeyFromSettings(); // Re-register hotkey when settings change
                     }
                     catch { }
                 });
@@ -53,13 +55,8 @@ namespace RadialMenu
             // Create radial menu window (hidden initially)
             _radialMenu = new RadialMenuWindow();
 
-            // Register global hotkey (Win+F12)
-            _hotKey = new GlobalHotKey(GlobalHotKey.MOD_WIN, Keys.F12, OnHotKeyPressed);
-            if (!_hotKey.Register())
-            {
-                System.Windows.MessageBox.Show("Failed to register global hotkey (Win+F12). It may already be in use by another application.", "RadialMenu", 
-                    MessageBoxButton.OK, MessageBoxImage.Warning);
-            }
+            // Register global hotkey from settings
+            RegisterHotkeyFromSettings();
 
             // Register settings hotkey (Ctrl+Alt+S)
             _settingsHotKey = new GlobalHotKey(GlobalHotKey.MOD_CONTROL | GlobalHotKey.MOD_ALT, Keys.S, ShowSettings);
@@ -133,6 +130,118 @@ namespace RadialMenu
                         MessageBoxImage.Error);
                 }
             });
+        }
+
+        private void RegisterHotkeyFromSettings()
+        {
+            try
+            {
+                // Unregister existing hotkey
+                _hotKey?.Unregister();
+                
+                // Load current settings
+                var settings = _settingsService?.Load();
+                var hotkeyString = settings?.Hotkeys?.Toggle ?? "Win+F12";
+                
+                // Parse hotkey string
+                if (ParseHotkey(hotkeyString, out uint modifiers, out System.Windows.Forms.Keys key))
+                {
+                    _hotKey = new GlobalHotKey(modifiers, key, OnHotKeyPressed);
+                    if (!_hotKey.Register())
+                    {
+                        System.Windows.MessageBox.Show(
+                            $"Failed to register global hotkey ({hotkeyString}). It may already be in use by another application.", 
+                            "RadialMenu", 
+                            MessageBoxButton.OK, 
+                            MessageBoxImage.Warning);
+                    }
+                }
+                else
+                {
+                    // Fallback to default if parsing fails
+                    _hotKey = new GlobalHotKey(GlobalHotKey.MOD_WIN, System.Windows.Forms.Keys.F12, OnHotKeyPressed);
+                    _hotKey.Register();
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log error and use default hotkey
+                System.Diagnostics.Debug.WriteLine($"Error registering hotkey: {ex.Message}");
+                _hotKey = new GlobalHotKey(GlobalHotKey.MOD_WIN, System.Windows.Forms.Keys.F12, OnHotKeyPressed);
+                _hotKey.Register();
+            }
+        }
+
+        private bool ParseHotkey(string hotkeyString, out uint modifiers, out System.Windows.Forms.Keys key)
+        {
+            modifiers = 0;
+            key = System.Windows.Forms.Keys.None;
+            
+            try
+            {
+                var parts = hotkeyString.Split('+');
+                if (parts.Length == 0) return false;
+                
+                // Parse modifiers
+                for (int i = 0; i < parts.Length - 1; i++)
+                {
+                    switch (parts[i].Trim().ToLower())
+                    {
+                        case "ctrl":
+                            modifiers |= GlobalHotKey.MOD_CONTROL;
+                            break;
+                        case "alt":
+                            modifiers |= GlobalHotKey.MOD_ALT;
+                            break;
+                        case "shift":
+                            modifiers |= GlobalHotKey.MOD_SHIFT;
+                            break;
+                        case "win":
+                            modifiers |= GlobalHotKey.MOD_WIN;
+                            break;
+                    }
+                }
+                
+                // Parse key (last part)
+                var keyPart = parts[parts.Length - 1].Trim();
+                
+                // Handle special key mappings
+                var keyMapping = new Dictionary<string, System.Windows.Forms.Keys>(StringComparer.OrdinalIgnoreCase)
+                {
+                    { "~", System.Windows.Forms.Keys.Oemtilde },
+                    { "Space", System.Windows.Forms.Keys.Space },
+                    { "Tab", System.Windows.Forms.Keys.Tab },
+                    { "Enter", System.Windows.Forms.Keys.Enter },
+                    { "Backspace", System.Windows.Forms.Keys.Back },
+                    { "Delete", System.Windows.Forms.Keys.Delete },
+                    { "Insert", System.Windows.Forms.Keys.Insert },
+                    { "Home", System.Windows.Forms.Keys.Home },
+                    { "End", System.Windows.Forms.Keys.End },
+                    { "PageUp", System.Windows.Forms.Keys.PageUp },
+                    { "PageDown", System.Windows.Forms.Keys.PageDown },
+                    { "Esc", System.Windows.Forms.Keys.Escape },
+                    { "PrtScn", System.Windows.Forms.Keys.PrintScreen },
+                    { "Pause", System.Windows.Forms.Keys.Pause }
+                };
+                
+                if (keyMapping.ContainsKey(keyPart))
+                {
+                    key = keyMapping[keyPart];
+                    return true;
+                }
+                
+                // Try to parse as enum
+                if (Enum.TryParse<System.Windows.Forms.Keys>(keyPart, true, out key))
+                {
+                    return true;
+                }
+                
+                return false;
+            }
+            catch
+            {
+                return false;
+            }
         }
 
         protected override void OnExit(ExitEventArgs e)

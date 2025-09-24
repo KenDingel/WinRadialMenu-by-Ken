@@ -591,6 +591,7 @@ namespace RadialMenu
                         );
                         UpdateCenterText(settings.Appearance.CenterText);
                         UpdateTheme(settings.Appearance.Theme);
+                        UpdateParticleSettings(settings.Appearance.ParticlesEnabled);
                     }
                 }
             }
@@ -1748,6 +1749,22 @@ namespace RadialMenu
                                     MessageBoxButton.OK, MessageBoxImage.Error);
                             }
                             break;
+
+                        default:
+                            // Default fallback: try to launch the file if a path is specified
+                            if (!string.IsNullOrWhiteSpace(item.Config.Path))
+                            {
+                                var defaultProcess = Process.Start(new ProcessStartInfo
+                                {
+                                    FileName = item.Config.Path,
+                                    UseShellExecute = true
+                                });
+                                if (defaultProcess != null)
+                                {
+                                    _ = PositionWindowNearCursor(defaultProcess, item.Config.Path ?? "unknown");
+                                }
+                            }
+                            break;
                     }
                 }
                 catch (Exception ex)
@@ -1965,7 +1982,19 @@ namespace RadialMenu
 
         private void StartEnergyParticleEffect()
         {
-            if (_particleSystem != null)
+            // Check if particles are enabled in settings
+            bool particlesEnabled = false;
+            try
+            {
+                if (System.Windows.Application.Current is App app && app.SettingsService != null)
+                {
+                    var settings = app.SettingsService.Load();
+                    particlesEnabled = settings?.Appearance?.ParticlesEnabled ?? false;
+                }
+            }
+            catch { }
+
+            if (_particleSystem != null && particlesEnabled)
             {
                 // Calculate the maximum radius for particles (should extend beyond menu items)
                 var maxRadius = (_outerRadius + 50) * _uiScale;
@@ -2118,7 +2147,19 @@ namespace RadialMenu
 
         private void StartSubmenuParticleEffect(Point originPoint)
         {
-            if (_particleSystem != null)
+            // Check if particles are enabled in settings
+            bool particlesEnabled = false;
+            try
+            {
+                if (System.Windows.Application.Current is App app && app.SettingsService != null)
+                {
+                    var settings = app.SettingsService.Load();
+                    particlesEnabled = settings?.Appearance?.ParticlesEnabled ?? false;
+                }
+            }
+            catch { }
+
+            if (_particleSystem != null && particlesEnabled)
             {
                 // Stop any existing particle effect
                 _particleSystem.Stop();
@@ -2358,6 +2399,17 @@ namespace RadialMenu
                 var created = LoadMenuItems(currentLevel.Items, null);
                 currentLevel.CreatedNodes = created;
             }
+        }
+
+        public void UpdateParticleSettings(bool particlesEnabled)
+        {
+            // If particles are disabled and currently running, stop them
+            if (!particlesEnabled && _particleSystem != null)
+            {
+                _particleSystem.Stop();
+            }
+            // If particles are enabled and the menu is currently visible, 
+            // we don't automatically start them - they will start on the next menu activation
         }
     }
 

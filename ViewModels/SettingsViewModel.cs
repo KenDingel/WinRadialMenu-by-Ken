@@ -73,8 +73,9 @@ namespace RadialMenu.ViewModels
             try { _working = _settingsService.Load() ?? new Settings(); } catch { _working = new Settings(); }
             if (_working.Menu == null) _working.Menu = new ObservableCollection<MenuItemConfig>();
 
-            // Subscribe to appearance property changes to enable IsDirty state
+            // Subscribe to appearance and hotkeys property changes to enable IsDirty state
             _working.Appearance.PropertyChanged += OnAppearancePropertyChanged;
+            _working.Hotkeys.PropertyChanged += OnHotkeysPropertyChanged;
 
             Log($"Loaded settings with {_working.Menu.Count} menu items");
 
@@ -95,17 +96,22 @@ namespace RadialMenu.ViewModels
             get => _working;
             set
             {
-                // Unsubscribe from old appearance events
+                // Unsubscribe from old events
                 if (_working?.Appearance != null)
                 {
                     _working.Appearance.PropertyChanged -= OnAppearancePropertyChanged;
+                }
+                if (_working?.Hotkeys != null)
+                {
+                    _working.Hotkeys.PropertyChanged -= OnHotkeysPropertyChanged;
                 }
 
                 _working = value ?? new Settings();
                 if (_working.Menu == null) _working.Menu = new ObservableCollection<MenuItemConfig>();
                 
-                // Subscribe to new appearance events
+                // Subscribe to new events
                 _working.Appearance.PropertyChanged += OnAppearancePropertyChanged;
+                _working.Hotkeys.PropertyChanged += OnHotkeysPropertyChanged;
                 
                 OnPropertyChanged();
             }
@@ -240,6 +246,7 @@ namespace RadialMenu.ViewModels
 
         private void OnAppearancePropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
+            IsDirty = true;
             PushSnapshot();
         }
 
@@ -481,6 +488,11 @@ namespace RadialMenu.ViewModels
             {
                 Log($"Error saving settings: {ex.Message}");
             }
+        }
+
+        private void OnHotkeysPropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            IsDirty = true;
         }
 
         private void Cancel()
