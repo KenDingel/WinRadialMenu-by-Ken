@@ -7,6 +7,7 @@ using System.IO;
 using RadialMenu.Models;
 using RadialMenu.Services;
 using System.Windows.Threading;
+using System.Windows;
 
 namespace RadialMenu.ViewModels
 {
@@ -170,7 +171,7 @@ namespace RadialMenu.ViewModels
         public RelayCommand SelectIconCommand { get; }
         public RelayCommand BulkChangeColorCommand { get; }
 
-        public System.Collections.Generic.List<string> ActionTypes { get; } = new() { "None", "launch", "folder", "url", "run", "discord" };
+        public System.Collections.Generic.List<string> ActionTypes { get; } = new() { "None", "launch", "folder", "url", "run", "discord", "clipboard" };
         
         // Color palette for menu item colors
         public System.Collections.Generic.List<ColorOption> AvailableColors { get; } = ColorPalette.PredefinedColors;
@@ -435,6 +436,13 @@ namespace RadialMenu.ViewModels
                                 UseShellExecute = false,
                                 CreateNoWindow = true
                             });
+                        break;
+
+                    case "clipboard":
+                        if (!string.IsNullOrEmpty(SelectedMenuItem.Path))
+                        {
+                            System.Windows.Clipboard.SetText(SelectedMenuItem.Path);
+                        }
                         break;
 
                     default:

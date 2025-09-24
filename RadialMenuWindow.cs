@@ -1766,6 +1766,13 @@ namespace RadialMenu
                             }
                             break;
 
+                        case "clipboard":
+                            if (!string.IsNullOrWhiteSpace(item.Config.Path))
+                            {
+                                System.Windows.Clipboard.SetText(item.Config.Path);
+                            }
+                            break;
+
                         default:
                             // Default fallback: try to launch the file if a path is specified
                             if (!string.IsNullOrWhiteSpace(item.Config.Path))
