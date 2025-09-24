@@ -76,6 +76,7 @@ namespace RadialMenu.ViewModels
             // Subscribe to appearance and hotkeys property changes to enable IsDirty state
             _working.Appearance.PropertyChanged += OnAppearancePropertyChanged;
             _working.Hotkeys.PropertyChanged += OnHotkeysPropertyChanged;
+            _working.Meta.PropertyChanged += OnMetaPropertyChanged;
 
             Log($"Loaded settings with {_working.Menu.Count} menu items");
 
@@ -105,6 +106,10 @@ namespace RadialMenu.ViewModels
                 {
                     _working.Hotkeys.PropertyChanged -= OnHotkeysPropertyChanged;
                 }
+                if (_working?.Meta != null)
+                {
+                    _working.Meta.PropertyChanged -= OnMetaPropertyChanged;
+                }
 
                 _working = value ?? new Settings();
                 if (_working.Menu == null) _working.Menu = new ObservableCollection<MenuItemConfig>();
@@ -112,6 +117,7 @@ namespace RadialMenu.ViewModels
                 // Subscribe to new events
                 _working.Appearance.PropertyChanged += OnAppearancePropertyChanged;
                 _working.Hotkeys.PropertyChanged += OnHotkeysPropertyChanged;
+                _working.Meta.PropertyChanged += OnMetaPropertyChanged;
                 
                 OnPropertyChanged();
             }
@@ -164,7 +170,7 @@ namespace RadialMenu.ViewModels
         public RelayCommand SelectIconCommand { get; }
         public RelayCommand BulkChangeColorCommand { get; }
 
-        public System.Collections.Generic.List<string> ActionTypes { get; } = new() { "None", "launch", "run", "discord" };
+        public System.Collections.Generic.List<string> ActionTypes { get; } = new() { "None", "launch", "folder", "url", "run", "discord" };
         
         // Color palette for menu item colors
         public System.Collections.Generic.List<ColorOption> AvailableColors { get; } = ColorPalette.PredefinedColors;
@@ -245,6 +251,12 @@ namespace RadialMenu.ViewModels
         }
 
         private void OnAppearancePropertyChanged(object? sender, PropertyChangedEventArgs e)
+        {
+            IsDirty = true;
+            PushSnapshot();
+        }
+
+        private void OnMetaPropertyChanged(object? sender, PropertyChangedEventArgs e)
         {
             IsDirty = true;
             PushSnapshot();
@@ -374,7 +386,44 @@ namespace RadialMenu.ViewModels
                 {
                     case "launch":
                         if (!string.IsNullOrEmpty(SelectedMenuItem.Path))
-                            System.Diagnostics.Process.Start(SelectedMenuItem.Path);
+                        {
+                            var startInfo = new System.Diagnostics.ProcessStartInfo
+                            {
+                                FileName = SelectedMenuItem.Path,
+                                UseShellExecute = true
+                            };
+                            
+                            // Set working directory to the executable's directory if it's a file path
+                            if (System.IO.File.Exists(SelectedMenuItem.Path))
+                            {
+                                startInfo.WorkingDirectory = System.IO.Path.GetDirectoryName(SelectedMenuItem.Path);
+                            }
+                            
+                            System.Diagnostics.Process.Start(startInfo);
+                        }
+                        break;
+
+                    case "folder":
+                        if (!string.IsNullOrEmpty(SelectedMenuItem.Path))
+                        {
+                            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                            {
+                                FileName = "explorer.exe",
+                                Arguments = SelectedMenuItem.Path,
+                                UseShellExecute = true
+                            });
+                        }
+                        break;
+
+                    case "url":
+                        if (!string.IsNullOrEmpty(SelectedMenuItem.Path))
+                        {
+                            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                            {
+                                FileName = SelectedMenuItem.Path,
+                                UseShellExecute = true
+                            });
+                        }
                         break;
 
                     case "run":
@@ -410,7 +459,10 @@ namespace RadialMenu.ViewModels
         private void Navigate(object? page)
         {
             if (page is string p)
+            {
+                _working.Meta.LastOpenedTab = p.ToLowerInvariant();
                 NavigateRequested?.Invoke(p);
+            }
         }
 
         private void Import()

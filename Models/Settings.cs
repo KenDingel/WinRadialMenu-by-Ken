@@ -14,10 +14,35 @@ namespace RadialMenu.Models
     public System.Collections.ObjectModel.ObservableCollection<MenuItemConfig> Menu { get; set; } = new System.Collections.ObjectModel.ObservableCollection<MenuItemConfig>();
     }
 
-    public class Meta
+    public class Meta : INotifyPropertyChanged
     {
-        public string ProfileName { get; set; } = "Default";
-        public DateTime LastModified { get; set; } = DateTime.UtcNow;
+        private string _profileName = "Default";
+        private DateTime _lastModified = DateTime.UtcNow;
+        private string? _lastOpenedTab;
+
+        public string ProfileName 
+        { 
+            get => _profileName; 
+            set { _profileName = value; OnPropertyChanged(); } 
+        }
+        
+        public DateTime LastModified 
+        { 
+            get => _lastModified; 
+            set { _lastModified = value; OnPropertyChanged(); } 
+        }
+        
+        public string? LastOpenedTab 
+        { 
+            get => _lastOpenedTab; 
+            set { _lastOpenedTab = value; OnPropertyChanged(); } 
+        }
+
+        public event PropertyChangedEventHandler? PropertyChanged;
+        protected void OnPropertyChanged([System.Runtime.CompilerServices.CallerMemberName] string? propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 
     public class Hotkeys : INotifyPropertyChanged

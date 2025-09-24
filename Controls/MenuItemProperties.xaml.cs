@@ -54,28 +54,46 @@ namespace RadialMenu.Controls
             if (e.Data.GetDataPresent(DataFormats.FileDrop) && sender is TextBox textBox)
             {
                 var files = (string[])e.Data.GetData(DataFormats.FileDrop);
-                
-                // Find the first executable file
-                var executableFile = files.FirstOrDefault(file => 
-                    Path.GetExtension(file).Equals(".exe", StringComparison.OrdinalIgnoreCase) ||
-                    Path.GetExtension(file).Equals(".lnk", StringComparison.OrdinalIgnoreCase));
-                
-                if (!string.IsNullOrEmpty(executableFile))
+                var viewModel = DataContext as ViewModels.SettingsViewModel;
+                var currentAction = viewModel?.SelectedMenuItem?.Action;
+
+                // Handle folders for folder action type
+                if (currentAction?.Equals("folder", StringComparison.OrdinalIgnoreCase) == true)
                 {
-                    // Set the path in the textbox
-                    textBox.Text = executableFile;
-                    
-                    // Trigger the binding update
-                    var bindingExpression = textBox.GetBindingExpression(TextBox.TextProperty);
-                    bindingExpression?.UpdateSource();
-                    
-                    // Auto-set action type to "launch" for EXE files
-                    if (DataContext is ViewModels.SettingsViewModel viewModel && viewModel.SelectedMenuItem != null)
+                    var folder = files.FirstOrDefault(path => Directory.Exists(path));
+                    if (!string.IsNullOrEmpty(folder))
                     {
-                        if (string.IsNullOrEmpty(viewModel.SelectedMenuItem.Action) || 
-                            viewModel.SelectedMenuItem.Action == "None")
+                        textBox.Text = folder;
+                        
+                        // Trigger the binding update
+                        var bindingExpression = textBox.GetBindingExpression(TextBox.TextProperty);
+                        bindingExpression?.UpdateSource();
+                    }
+                }
+                else
+                {
+                    // Find the first executable file for other action types
+                    var executableFile = files.FirstOrDefault(file => 
+                        Path.GetExtension(file).Equals(".exe", StringComparison.OrdinalIgnoreCase) ||
+                        Path.GetExtension(file).Equals(".lnk", StringComparison.OrdinalIgnoreCase));
+                    
+                    if (!string.IsNullOrEmpty(executableFile))
+                    {
+                        // Set the path in the textbox
+                        textBox.Text = executableFile;
+                        
+                        // Trigger the binding update
+                        var bindingExpression = textBox.GetBindingExpression(TextBox.TextProperty);
+                        bindingExpression?.UpdateSource();
+                        
+                        // Auto-set action type to "launch" for EXE files
+                        if (viewModel != null && viewModel.SelectedMenuItem != null)
                         {
-                            viewModel.SelectedMenuItem.Action = "launch";
+                            if (string.IsNullOrEmpty(viewModel.SelectedMenuItem.Action) || 
+                                viewModel.SelectedMenuItem.Action == "None")
+                            {
+                                viewModel.SelectedMenuItem.Action = "launch";
+                            }
                         }
                     }
                 }
@@ -90,32 +108,56 @@ namespace RadialMenu.Controls
             var pathTextBox = this.FindName("PathTextBox") as TextBox;
             if (pathTextBox == null) return;
 
-            var openFileDialog = new OpenFileDialog
-            {
-                Title = "Select Executable File",
-                Filter = "Executable files (*.exe)|*.exe|Shortcut files (*.lnk)|*.lnk|All files (*.*)|*.*",
-                FilterIndex = 1
-            };
+            // Check if we're dealing with a folder action type
+            var viewModel = DataContext as ViewModels.SettingsViewModel;
+            var currentAction = viewModel?.SelectedMenuItem?.Action;
 
-            if (openFileDialog.ShowDialog() == true)
+            if (currentAction?.Equals("folder", StringComparison.OrdinalIgnoreCase) == true)
             {
-                pathTextBox.Text = openFileDialog.FileName;
-                
-                // Trigger the binding update
-                var bindingExpression = pathTextBox.GetBindingExpression(TextBox.TextProperty);
-                bindingExpression?.UpdateSource();
-                
-                // Auto-set action type to "launch" for EXE files
-                var extension = Path.GetExtension(openFileDialog.FileName);
-                if ((extension.Equals(".exe", StringComparison.OrdinalIgnoreCase) || 
-                     extension.Equals(".lnk", StringComparison.OrdinalIgnoreCase)) &&
-                    DataContext is ViewModels.SettingsViewModel viewModel && 
-                    viewModel.SelectedMenuItem != null)
+                // Use folder browser for folder action type
+                var folderDialog = new Microsoft.Win32.OpenFolderDialog
                 {
-                    if (string.IsNullOrEmpty(viewModel.SelectedMenuItem.Action) || 
-                        viewModel.SelectedMenuItem.Action == "None")
+                    Title = "Select Folder"
+                };
+
+                if (folderDialog.ShowDialog() == true)
+                {
+                    pathTextBox.Text = folderDialog.FolderName;
+                    
+                    // Trigger the binding update
+                    var bindingExpression = pathTextBox.GetBindingExpression(TextBox.TextProperty);
+                    bindingExpression?.UpdateSource();
+                }
+            }
+            else
+            {
+                // Use file browser for other action types
+                var openFileDialog = new OpenFileDialog
+                {
+                    Title = "Select Executable File",
+                    Filter = "Executable files (*.exe)|*.exe|Shortcut files (*.lnk)|*.lnk|All files (*.*)|*.*",
+                    FilterIndex = 1
+                };
+
+                if (openFileDialog.ShowDialog() == true)
+                {
+                    pathTextBox.Text = openFileDialog.FileName;
+                    
+                    // Trigger the binding update
+                    var bindingExpression = pathTextBox.GetBindingExpression(TextBox.TextProperty);
+                    bindingExpression?.UpdateSource();
+                    
+                    // Auto-set action type to "launch" for EXE files
+                    var extension = Path.GetExtension(openFileDialog.FileName);
+                    if ((extension.Equals(".exe", StringComparison.OrdinalIgnoreCase) || 
+                         extension.Equals(".lnk", StringComparison.OrdinalIgnoreCase)) &&
+                        viewModel != null && viewModel.SelectedMenuItem != null)
                     {
-                        viewModel.SelectedMenuItem.Action = "launch";
+                        if (string.IsNullOrEmpty(viewModel.SelectedMenuItem.Action) || 
+                            viewModel.SelectedMenuItem.Action == "None")
+                        {
+                            viewModel.SelectedMenuItem.Action = "launch";
+                        }
                     }
                 }
             }

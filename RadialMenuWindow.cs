@@ -1657,11 +1657,19 @@ namespace RadialMenu
                     switch (item.Config.Action?.ToLower())
                     {
                         case "launch":
-                            var launchProcess = Process.Start(new ProcessStartInfo
+                            var launchStartInfo = new ProcessStartInfo
                             {
                                 FileName = item.Config.Path,
                                 UseShellExecute = true
-                            });
+                            };
+                            
+                            // Set working directory to the executable's directory if it's a file path
+                            if (!string.IsNullOrWhiteSpace(item.Config.Path) && System.IO.File.Exists(item.Config.Path))
+                            {
+                                launchStartInfo.WorkingDirectory = System.IO.Path.GetDirectoryName(item.Config.Path);
+                            }
+                            
+                            var launchProcess = Process.Start(launchStartInfo);
                             if (launchProcess != null)
                             {
                                 _ = PositionWindowNearCursor(launchProcess, item.Config.Path ?? "unknown");
@@ -1692,12 +1700,20 @@ namespace RadialMenu
                         case "command":
                             if (string.IsNullOrWhiteSpace(item.Config.Path)) break;
                             var parts = item.Config.Path.Split(new[] { ' ' }, 2);
-                            var commandProcess = Process.Start(new ProcessStartInfo
+                            var commandStartInfo = new ProcessStartInfo
                             {
                                 FileName = parts[0],
                                 Arguments = parts.Length > 1 ? parts[1] : "",
                                 UseShellExecute = true
-                            });
+                            };
+                            
+                            // Set working directory to the executable's directory if it's a file path
+                            if (System.IO.File.Exists(parts[0]))
+                            {
+                                commandStartInfo.WorkingDirectory = System.IO.Path.GetDirectoryName(parts[0]);
+                            }
+                            
+                            var commandProcess = Process.Start(commandStartInfo);
                             if (commandProcess != null)
                             {
                                 _ = PositionWindowNearCursor(commandProcess, parts[0]);
@@ -1754,11 +1770,19 @@ namespace RadialMenu
                             // Default fallback: try to launch the file if a path is specified
                             if (!string.IsNullOrWhiteSpace(item.Config.Path))
                             {
-                                var defaultProcess = Process.Start(new ProcessStartInfo
+                                var defaultStartInfo = new ProcessStartInfo
                                 {
                                     FileName = item.Config.Path,
                                     UseShellExecute = true
-                                });
+                                };
+                                
+                                // Set working directory to the executable's directory if it's a file path
+                                if (System.IO.File.Exists(item.Config.Path))
+                                {
+                                    defaultStartInfo.WorkingDirectory = System.IO.Path.GetDirectoryName(item.Config.Path);
+                                }
+                                
+                                var defaultProcess = Process.Start(defaultStartInfo);
                                 if (defaultProcess != null)
                                 {
                                     _ = PositionWindowNearCursor(defaultProcess, item.Config.Path ?? "unknown");

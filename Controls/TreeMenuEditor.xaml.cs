@@ -23,11 +23,6 @@ namespace RadialMenu.Controls
 
         private Point _dragStartPoint;
         private MenuItemConfig? _draggedItem;
-        
-        // Triple-click detection variables
-        private DateTime _lastClickTime = DateTime.MinValue;
-        private int _clickCount = 0;
-        private const int TripleClickThreshold = 500; // milliseconds
 
         public TreeMenuEditor()
         {
@@ -214,59 +209,18 @@ namespace RadialMenu.Controls
             return null;
         }
 
-        private void TreeView_MouseUp(object sender, MouseButtonEventArgs e)
-        {
-            // Triple-click detection for expand all
-            var now = DateTime.Now;
-            if ((now - _lastClickTime).TotalMilliseconds < TripleClickThreshold)
-            {
-                _clickCount++;
-            }
-            else
-            {
-                _clickCount = 1;
-            }
-            _lastClickTime = now;
-
-            if (_clickCount == 3)
-            {
-                Log("TreeView triple-clicked - expanding all nodes");
-                ExpandAllTreeViewItems(MenuTreeView);
-                _clickCount = 0; // Reset to prevent multiple expansions
-            }
-        }
-
         private void TreeView_PreviewMouseDoubleClick(object sender, MouseButtonEventArgs e)
         {
             // Find the TreeViewItem that was double-clicked
             var treeViewItem = FindAncestor<TreeViewItem>((DependencyObject)e.OriginalSource);
             if (treeViewItem != null)
             {
-                // Collapse the specific item
-                treeViewItem.IsExpanded = false;
-                Log($"TreeViewItem double-clicked - collapsing item: {(treeViewItem.DataContext as MenuItemConfig)?.Label}");
+                // Toggle the expansion of the specific item
+                treeViewItem.IsExpanded = !treeViewItem.IsExpanded;
+                Log($"TreeViewItem double-clicked - toggling expansion for item: {(treeViewItem.DataContext as MenuItemConfig)?.Label}, now expanded: {treeViewItem.IsExpanded}");
                 
                 // Prevent the click from bubbling up to avoid triggering other handlers
                 e.Handled = true;
-            }
-        }
-
-        private void ExpandAllTreeViewItems(ItemsControl itemsControl)
-        {
-            for (int i = 0; i < itemsControl.Items.Count; i++)
-            {
-                var container = itemsControl.ItemContainerGenerator.ContainerFromIndex(i) as TreeViewItem;
-                if (container != null)
-                {
-                    // Expand this item
-                    container.IsExpanded = true;
-                    
-                    // Force the container generator to create child containers
-                    container.UpdateLayout();
-                    
-                    // Recursively expand child items
-                    ExpandAllTreeViewItems(container);
-                }
             }
         }
     }

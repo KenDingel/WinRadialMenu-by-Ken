@@ -43,7 +43,20 @@ namespace RadialMenu.Views
                 }
 
                 // Load default page
-                ContentHost.Content = CreateGeneralPage();
+                string defaultPage = "general";
+                if (_vm != null)
+                {
+                    if (string.IsNullOrEmpty(_vm.Working.Meta.LastOpenedTab))
+                    {
+                        _vm.Working.Meta.LastOpenedTab = "menu";
+                        defaultPage = "menu";
+                    }
+                    else
+                    {
+                        defaultPage = _vm.Working.Meta.LastOpenedTab;
+                    }
+                }
+                ShowPage(defaultPage);
 
                 // Wire ViewModel events
                 if (_vm != null)
