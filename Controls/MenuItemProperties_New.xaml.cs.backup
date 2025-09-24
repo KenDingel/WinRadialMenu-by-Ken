@@ -1,0 +1,12 @@
+using System.Windows.Controls;
+
+namespace RadialMenu.Controls
+{
+    public partial class MenuItemPropertiesNew : UserControl
+    {
+        public MenuItemPropertiesNew()
+        {
+            InitializeComponent();
+        }
+    }
+}

@@ -13,6 +13,9 @@ using System.IO;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System.Windows.Threading;
+using System.Runtime.InteropServices;
+using System.Threading.Tasks;
+using RadialMenu.Controls;
 
 namespace RadialMenu
 {
@@ -48,6 +51,62 @@ namespace RadialMenu
         private Canvas _glowingTipContainer = null!;
         private Ellipse _glowingTip = null!;
         private Storyboard _spinningAnimation = null!;
+        
+        // Energy particle system
+        private EnergyParticleSystem _particleSystem = null!;
+        
+        // Cursor position tracking for window positioning
+        private Point _activationCursorPos;
+        
+        // Windows API for window positioning
+        [DllImport("user32.dll")]
+        private static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, 
+            int X, int Y, int cx, int cy, uint uFlags);
+            
+        [DllImport("user32.dll")]
+        private static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+        
+        [DllImport("user32.dll", SetLastError = true)]
+        private static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
+        
+        [DllImport("user32.dll")]
+        private static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
+        
+        // Multi-monitor support APIs
+        [DllImport("user32.dll")]
+        private static extern IntPtr MonitorFromPoint(POINT pt, uint dwFlags);
+        
+        [DllImport("user32.dll")]
+        private static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFO lpmi);
+        
+        [StructLayout(LayoutKind.Sequential)]
+        private struct POINT
+        {
+            public int X;
+            public int Y;
+        }
+        
+        [StructLayout(LayoutKind.Sequential)]
+        private struct RECT
+        {
+            public int Left;
+            public int Top;
+            public int Right;
+            public int Bottom;
+        }
+        
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Auto)]
+        private struct MONITORINFO
+        {
+            public uint cbSize;
+            public RECT rcMonitor;
+            public RECT rcWork;
+            public uint dwFlags;
+        }
+        
+        private const uint SWP_NOZORDER = 0x0004;
+        private const uint SWP_NOSIZE = 0x0001;
+        private const uint MONITOR_DEFAULTTONEAREST = 0x00000002;
 
         public RadialMenuWindow()
         {
@@ -129,6 +188,9 @@ namespace RadialMenu
             Canvas.SetLeft(_centerCircle, (Width / 2) - (_centerCircle.Width / 2));
             Canvas.SetTop(_centerCircle, (Height / 2) - (_centerCircle.Height / 2));
             _canvas.Children.Add(_centerCircle);
+            
+            // Add hover event to center circle for navigation back
+            _centerCircle.MouseEnter += OnCenterCircleMouseEnter;
 
             // Center text (shows current level or from settings)
             var centerText = "MENU";
@@ -291,6 +353,49 @@ namespace RadialMenu
             _spinningAnimation.Children.Add(tipAnimation);
             _spinningAnimation.Children.Add(pulseAnimation);
         }
+
+        private void CreateEnergyParticleSystem()
+        {
+            // Use the same dimensions as the canvas to ensure proper rendering
+            var canvasWidth = _canvas?.Width ?? 0;
+            var canvasHeight = _canvas?.Height ?? 0;
+            
+            // Ensure we have valid dimensions
+            if (canvasWidth <= 0 || canvasHeight <= 0 || double.IsNaN(canvasWidth) || double.IsNaN(canvasHeight))
+            {
+                canvasWidth = 1800 * _uiScale;
+                canvasHeight = 1800 * _uiScale;
+            }
+            
+            // Create the energy particle system with enhanced fantasy colors
+            _particleSystem = new EnergyParticleSystem
+            {
+                Width = canvasWidth, // Match canvas width
+                Height = canvasHeight, // Match canvas height
+                UIScale = _uiScale,
+                ParticleCount = 36, // Old school optimization: fewer particles, bigger impact
+                SpiralTurns = 2.5, // Reduced for performance
+                AnimationDuration = TimeSpan.FromMilliseconds(2200), // Shorter for snappier feel
+                PrimaryColor = Color.FromArgb(255, 100, 220, 255), // Brighter cyan fantasy energy
+                SecondaryColor = Color.FromArgb(255, 200, 120, 255), // Golden-purple magic
+                ParticleSize = 24.0, // Larger base size to compensate for fewer particles
+                TestMode = false // Disable test mode - use real particles
+            };
+            
+            // Position it behind menu items but above background elements
+            Canvas.SetLeft(_particleSystem, 0);
+            Canvas.SetTop(_particleSystem, 0);
+            
+            // Set z-index to make particles visible above background but behind menu items
+            Canvas.SetZIndex(_particleSystem, 1);
+            
+            // Add to canvas (should be behind menu items)
+            _canvas?.Children.Add(_particleSystem);
+            
+            System.Diagnostics.Debug.WriteLine($"[RadialMenuWindow] Created particle system - Canvas size: {canvasWidth}x{canvasHeight}, UIScale: {_uiScale}, Children count: {_canvas?.Children.Count ?? -1}");
+        }
+
+
 
         private List<ConfigItem> ConvertMenuItems(System.Collections.ObjectModel.ObservableCollection<Models.MenuItemConfig> menuItems)
         {
@@ -623,11 +728,14 @@ namespace RadialMenu
         {
             if (_isAnimating) return;
 
+            // Store the cursor position for potential window positioning
+            _activationCursorPos = new Point(x, y);
+
             Left = x - Width / 2;
             Top = y - Height / 2;
             _centerPoint = new Point(_canvas.Width / 2, _canvas.Height / 2);
 
-            Log($"ShowAt called. Config items: {_config?.Items?.Count ?? 0}. Canvas size: {_canvas.Width}x{_canvas.Height}. Center: {_centerPoint}");
+            Log($"ShowAt called at cursor position ({x}, {y}). Config items: {_config?.Items?.Count ?? 0}. Canvas size: {_canvas.Width}x{_canvas.Height}. Center: {_centerPoint}");
 
             // Clear all canvas children except center elements
             UIElement[] centerElements = { _centerCircle, _centerText };
@@ -666,6 +774,17 @@ namespace RadialMenu
             // Re-center center text after text change
             PositionCenterElements();
 
+            // Always recreate particle system to ensure fresh state (prevents repeated activation issues)
+            if (_particleSystem != null)
+            {
+                // Stop and remove existing particle system
+                _particleSystem.Stop();
+                _canvas.Children.Remove(_particleSystem);
+            }
+            
+            // Create fresh particle system every time
+            CreateEnergyParticleSystem();
+            
             // Set opacity to 0 before showing to prevent flash
             Opacity = 0;
             Show();
@@ -1425,6 +1544,93 @@ namespace RadialMenu
             _hoveredItem = null;
         }
 
+        private RECT GetMonitorBounds(Point cursorPosition)
+        {
+            try
+            {
+                var point = new POINT { X = (int)cursorPosition.X, Y = (int)cursorPosition.Y };
+                var hMonitor = MonitorFromPoint(point, MONITOR_DEFAULTTONEAREST);
+                
+                if (hMonitor != IntPtr.Zero)
+                {
+                    var monitorInfo = new MONITORINFO();
+                    monitorInfo.cbSize = (uint)Marshal.SizeOf(monitorInfo);
+                    
+                    if (GetMonitorInfo(hMonitor, ref monitorInfo))
+                    {
+                        return monitorInfo.rcWork; // Use work area (excludes taskbar)
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Log($"Error getting monitor bounds: {ex.Message}");
+            }
+            
+            // Fallback to primary screen
+            return new RECT
+            {
+                Left = 0,
+                Top = 0,
+                Right = (int)SystemParameters.PrimaryScreenWidth,
+                Bottom = (int)SystemParameters.PrimaryScreenHeight
+            };
+        }
+
+        private async Task PositionWindowNearCursor(Process process, string executableName)
+        {
+            try
+            {
+                // Wait for the process to start and create its main window
+                await Task.Delay(500); // Initial delay to let the process start
+                
+                // Try to find and position the window for up to 5 seconds
+                for (int attempts = 0; attempts < 10; attempts++)
+                {
+                    if (process.HasExited) return;
+                    
+                    // Wait for the main window handle to be available
+                    if (process.MainWindowHandle != IntPtr.Zero)
+                    {
+                        var hwnd = process.MainWindowHandle;
+                        
+                        // Get current window size
+                        if (GetWindowRect(hwnd, out RECT rect))
+                        {
+                            int windowWidth = rect.Right - rect.Left;
+                            int windowHeight = rect.Bottom - rect.Top;
+                            
+                            // Calculate position near cursor, but ensure window is fully visible
+                            int newX = (int)(_activationCursorPos.X - windowWidth / 2);
+                            int newY = (int)(_activationCursorPos.Y - windowHeight / 2);
+                            
+                            // Get the monitor bounds where the cursor was when menu was activated
+                            var monitorBounds = GetMonitorBounds(_activationCursorPos);
+                            
+                            // Ensure window stays within monitor bounds
+                            newX = Math.Max(monitorBounds.Left, Math.Min(newX, monitorBounds.Right - windowWidth));
+                            newY = Math.Max(monitorBounds.Top, Math.Min(newY, monitorBounds.Bottom - windowHeight));
+                            
+                            // Position the window
+                            SetWindowPos(hwnd, IntPtr.Zero, newX, newY, 0, 0, 
+                                SWP_NOZORDER | SWP_NOSIZE);
+                            
+                            Log($"Positioned window '{executableName}' at ({newX}, {newY}) near cursor ({_activationCursorPos.X}, {_activationCursorPos.Y}) on monitor bounds ({monitorBounds.Left}, {monitorBounds.Top}, {monitorBounds.Right}, {monitorBounds.Bottom})");
+                            return;
+                        }
+                    }
+                    
+                    await Task.Delay(500); // Wait before next attempt
+                }
+                
+                Log($"Could not position window for '{executableName}' - main window handle not found");
+            }
+            catch (Exception ex)
+            {
+                Log($"Error positioning window for '{executableName}': {ex.Message}");
+            }
+        }
+
         private void ExecuteItem(RadialMenuItem item)
         {
             if (item.Config.Submenu != null && item.Config.Submenu.Count > 0)
@@ -1436,6 +1642,9 @@ namespace RadialMenu
                     _menuStack.Push(new MenuLevel { Items = item.Config.Submenu, Name = item.Config.Label, Origin = item.Center, CreatedNodes = created, Connectors = connectors });
                     _centerText.Text = item.Config.Label;
                     item.Expanded = true;
+                    
+                    // Trigger particle effect for submenu opening
+                    StartSubmenuParticleEffect(item.Center);
                 }
                 // keep existing nodes visible; no full reload
             }
@@ -1447,11 +1656,15 @@ namespace RadialMenu
                     switch (item.Config.Action?.ToLower())
                     {
                         case "launch":
-                            Process.Start(new ProcessStartInfo
+                            var launchProcess = Process.Start(new ProcessStartInfo
                             {
                                 FileName = item.Config.Path,
                                 UseShellExecute = true
                             });
+                            if (launchProcess != null)
+                            {
+                                _ = PositionWindowNearCursor(launchProcess, item.Config.Path ?? "unknown");
+                            }
                             break;
 
                         case "url":
@@ -1463,23 +1676,77 @@ namespace RadialMenu
                             break;
 
                         case "folder":
-                            Process.Start(new ProcessStartInfo
+                            var folderProcess = Process.Start(new ProcessStartInfo
                             {
                                 FileName = "explorer.exe",
                                 Arguments = item.Config.Path,
                                 UseShellExecute = true
                             });
+                            if (folderProcess != null)
+                            {
+                                _ = PositionWindowNearCursor(folderProcess, "explorer.exe");
+                            }
                             break;
 
                         case "command":
                             if (string.IsNullOrWhiteSpace(item.Config.Path)) break;
                             var parts = item.Config.Path.Split(new[] { ' ' }, 2);
-                            Process.Start(new ProcessStartInfo
+                            var commandProcess = Process.Start(new ProcessStartInfo
                             {
                                 FileName = parts[0],
                                 Arguments = parts.Length > 1 ? parts[1] : "",
                                 UseShellExecute = true
                             });
+                            if (commandProcess != null)
+                            {
+                                _ = PositionWindowNearCursor(commandProcess, parts[0]);
+                            }
+                            break;
+
+                        case "discord":
+                            if (string.IsNullOrWhiteSpace(item.Config.Path)) break;
+                            
+                            try
+                            {
+                                // Get AutoHotkey executable and appropriate script for the version
+                                var (ahkExecutable, scriptPath) = GetAutoHotkeyInfo(item.Config.Path);
+                                
+                                // Check if the script exists
+                                if (!System.IO.File.Exists(scriptPath))
+                                {
+                                    MessageBox.Show($"Discord navigation script not found in application directory.\n\nExpected location: {scriptPath}\n\nPlease ensure the script is in the same folder as the application executable.", "Discord Script Missing", 
+                                        MessageBoxButton.OK, MessageBoxImage.Error);
+                                    break;
+                                }
+
+                                var discordProcess = Process.Start(new ProcessStartInfo
+                                {
+                                    FileName = ahkExecutable,
+                                    Arguments = $"\"{scriptPath}\" \"{item.Config.Path}\"",
+                                    UseShellExecute = true,
+                                    WindowStyle = ProcessWindowStyle.Hidden
+                                });
+                            }
+                            catch (System.ComponentModel.Win32Exception ex) when (ex.NativeErrorCode == 2)
+                            {
+                                // AutoHotkey not found in PATH
+                                var result = MessageBox.Show("AutoHotkey is not installed or not found in PATH.\n\nWould you like to download AutoHotkey from the official website?\n\nClick Yes to open the download page, or No to cancel.", 
+                                    "AutoHotkey Required", MessageBoxButton.YesNo, MessageBoxImage.Question);
+                                
+                                if (result == MessageBoxResult.Yes)
+                                {
+                                    Process.Start(new ProcessStartInfo
+                                    {
+                                        FileName = "https://www.autohotkey.com/",
+                                        UseShellExecute = true
+                                    });
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                MessageBox.Show($"Failed to run Discord navigation script: {ex.Message}", "Discord Navigation Error", 
+                                    MessageBoxButton.OK, MessageBoxImage.Error);
+                            }
                             break;
                     }
                 }
@@ -1497,75 +1764,95 @@ namespace RadialMenu
         {
             if (e.Key == Key.Escape)
             {
-                if (_menuStack.Count > 1)
+                NavigateBack();
+            }
+        }
+
+        /// <summary>
+        /// Handles mouse enter event for the center circle to navigate back when hovering
+        /// </summary>
+        private void OnCenterCircleMouseEnter(object sender, MouseEventArgs e)
+        {
+            // Only navigate back if there are nested menu levels open
+            if (_menuStack.Count > 1)
+            {
+                NavigateBack();
+            }
+        }
+
+        /// <summary>
+        /// Navigates back to the previous menu level or hides the menu if at root level
+        /// </summary>
+        private void NavigateBack()
+        {
+            if (_menuStack.Count > 1)
+            {
+                // Go back to previous menu
+                var popped = _menuStack.Pop();
+                // remove nodes/connectors created by the popped level
+                if (popped.CreatedNodes != null)
                 {
-                    // Go back to previous menu
-                    var popped = _menuStack.Pop();
-                    // remove nodes/connectors created by the popped level
-                    if (popped.CreatedNodes != null)
+                    // animate nodes back to origin before removing
+                    foreach (var n in popped.CreatedNodes)
                     {
-                        // animate nodes back to origin before removing
-                        foreach (var n in popped.CreatedNodes)
+                        // animate scale down and translate toward popped.Origin if available
+                        var target = popped.Origin ?? _centerPoint;
+                        if (n.Visual.RenderTransform is TransformGroup tg)
                         {
-                            // animate scale down and translate toward popped.Origin if available
-                            var target = popped.Origin ?? _centerPoint;
-                            if (n.Visual.RenderTransform is TransformGroup tg)
+                            var translate = tg.Children.OfType<TranslateTransform>().FirstOrDefault();
+                            var scale = tg.Children.OfType<ScaleTransform>().FirstOrDefault();
+                            if (translate != null)
                             {
-                                var translate = tg.Children.OfType<TranslateTransform>().FirstOrDefault();
-                                var scale = tg.Children.OfType<ScaleTransform>().FirstOrDefault();
-                                if (translate != null)
-                                {
-                                    var animX = new DoubleAnimation(0, target.X - n.Center.X, TimeSpan.FromMilliseconds(360)) { EasingFunction = new ElasticEase { Oscillations = 1, Springiness = 6, EasingMode = EasingMode.EaseIn } };
-                                    var animY = new DoubleAnimation(0, target.Y - n.Center.Y, TimeSpan.FromMilliseconds(360)) { EasingFunction = new ElasticEase { Oscillations = 1, Springiness = 6, EasingMode = EasingMode.EaseIn } };
-                                    translate.BeginAnimation(TranslateTransform.XProperty, animX);
-                                    translate.BeginAnimation(TranslateTransform.YProperty, animY);
-                                }
-                                if (scale != null)
-                                {
-                                    var sX = new DoubleAnimation(scale.ScaleX, 0.2, TimeSpan.FromMilliseconds(360));
-                                    var sY = new DoubleAnimation(scale.ScaleY, 0.2, TimeSpan.FromMilliseconds(360));
-                                    scale.BeginAnimation(ScaleTransform.ScaleXProperty, sX);
-                                    scale.BeginAnimation(ScaleTransform.ScaleYProperty, sY);
-                                }
+                                var animX = new DoubleAnimation(0, target.X - n.Center.X, TimeSpan.FromMilliseconds(360)) { EasingFunction = new ElasticEase { Oscillations = 1, Springiness = 6, EasingMode = EasingMode.EaseIn } };
+                                var animY = new DoubleAnimation(0, target.Y - n.Center.Y, TimeSpan.FromMilliseconds(360)) { EasingFunction = new ElasticEase { Oscillations = 1, Springiness = 6, EasingMode = EasingMode.EaseIn } };
+                                translate.BeginAnimation(TranslateTransform.XProperty, animX);
+                                translate.BeginAnimation(TranslateTransform.YProperty, animY);
                             }
-                            // fade out and remove after animation completes
-                            var fade = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(380));
-                            fade.Completed += (s, e2) =>
+                            if (scale != null)
                             {
-                                _canvas.Children.Remove(n.Visual);
-                                _canvas.Children.Remove(n.LabelText);
-                                _menuItems.Remove(n);
-                            };
-                            n.Visual.BeginAnimation(UIElement.OpacityProperty, fade);
-                            n.LabelText.BeginAnimation(UIElement.OpacityProperty, fade);
+                                var sX = new DoubleAnimation(scale.ScaleX, 0.2, TimeSpan.FromMilliseconds(360));
+                                var sY = new DoubleAnimation(scale.ScaleY, 0.2, TimeSpan.FromMilliseconds(360));
+                                scale.BeginAnimation(ScaleTransform.ScaleXProperty, sX);
+                                scale.BeginAnimation(ScaleTransform.ScaleYProperty, sY);
+                            }
                         }
-                    }
-                    if (popped.Connectors != null)
-                    {
-                        foreach (var c in popped.Connectors)
+                        // fade out and remove after animation completes
+                        var fade = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(380));
+                        fade.Completed += (s, e2) =>
                         {
-                            var fade = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(300));
-                            fade.Completed += (s, e2) => _canvas.Children.Remove(c);
-                            ((UIElement)c).BeginAnimation(UIElement.OpacityProperty, fade);
-                        }
+                            _canvas.Children.Remove(n.Visual);
+                            _canvas.Children.Remove(n.LabelText);
+                            _menuItems.Remove(n);
+                        };
+                        n.Visual.BeginAnimation(UIElement.OpacityProperty, fade);
+                        n.LabelText.BeginAnimation(UIElement.OpacityProperty, fade);
                     }
-                    // Clear Expanded on the parent item so it can be re-opened
-                    if (popped.Origin != null)
-                    {
-                        var parent = _menuItems.FirstOrDefault(m => m.Center == popped.Origin.Value);
-                        if (parent != null)
-                        {
-                            parent.Expanded = false;
-                        }
-                    }
-                    var previousLevel = _menuStack.Peek();
-                    _centerText.Text = previousLevel.Name;
-                    // no reload; remaining nodes are still visible
                 }
-                else
+                if (popped.Connectors != null)
                 {
-                    HideMenu();
+                    foreach (var c in popped.Connectors)
+                    {
+                        var fade = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(300));
+                        fade.Completed += (s, e2) => _canvas.Children.Remove(c);
+                        ((UIElement)c).BeginAnimation(UIElement.OpacityProperty, fade);
+                    }
                 }
+                // Clear Expanded on the parent item so it can be re-opened
+                if (popped.Origin != null)
+                {
+                    var parent = _menuItems.FirstOrDefault(m => m.Center == popped.Origin.Value);
+                    if (parent != null)
+                    {
+                        parent.Expanded = false;
+                    }
+                }
+                var previousLevel = _menuStack.Peek();
+                _centerText.Text = previousLevel.Name;
+                // no reload; remaining nodes are still visible
+            }
+            else
+            {
+                HideMenu();
             }
         }
 
@@ -1590,6 +1877,9 @@ namespace RadialMenu
 
             // Start the spinning animation
             StartSpinningAnimation();
+            
+            // Start the energy particle spiral effect
+            StartEnergyParticleEffect();
 
             // Skip individual item animations for root menu (items are already positioned correctly)
             // Only animate submenu items that already have transforms from LoadMenuItems
@@ -1615,6 +1905,9 @@ namespace RadialMenu
             
             // Stop the spinning animation
             StopSpinningAnimation();
+            
+            // Stop the particle effect
+            StopEnergyParticleEffect();
             
             var fadeOut = new DoubleAnimation(1, 0, TimeSpan.FromMilliseconds(150));
             fadeOut.Completed += (s, e) =>
@@ -1667,6 +1960,174 @@ namespace RadialMenu
                     _spinningRing.Visibility = Visibility.Collapsed;
                 if (_glowingTipContainer != null)
                     _glowingTipContainer.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private void StartEnergyParticleEffect()
+        {
+            if (_particleSystem != null)
+            {
+                // Calculate the maximum radius for particles (should extend beyond menu items)
+                var maxRadius = (_outerRadius + 50) * _uiScale;
+                _particleSystem.StartEnergySpiral(_centerPoint, maxRadius);
+            }
+        }
+
+        private void StopEnergyParticleEffect()
+        {
+            _particleSystem?.Stop();
+        }
+
+        private string FindAutoHotkeyExecutable()
+        {
+            // Check if user has configured a custom path
+            string? customPath = null;
+            try
+            {
+                if (System.Windows.Application.Current is App app && app.SettingsService != null)
+                {
+                    var settings = app.SettingsService.Load();
+                    customPath = settings?.ExternalTools?.AutoHotkeyPath;
+                }
+            }
+            catch
+            {
+                // Ignore errors loading settings
+            }
+
+            if (!string.IsNullOrWhiteSpace(customPath) && System.IO.File.Exists(customPath))
+            {
+                return customPath;
+            }
+
+            // Common AutoHotkey installation paths
+            var commonPaths = new[]
+            {
+                @"C:\Program Files\AutoHotkey\AutoHotkey.exe",
+                @"C:\Program Files (x86)\AutoHotkey\AutoHotkey.exe",
+                @"C:\Program Files\AutoHotkey\v2\AutoHotkey64.exe",
+                @"C:\Program Files\AutoHotkey\v2\AutoHotkey32.exe",
+                Environment.ExpandEnvironmentVariables(@"%LOCALAPPDATA%\Programs\AutoHotkey\AutoHotkey.exe")
+            };
+
+            // Check each common path
+            foreach (var path in commonPaths)
+            {
+                if (System.IO.File.Exists(path))
+                {
+                    return path;
+                }
+            }
+
+            // Try to find AutoHotkey in PATH
+            try
+            {
+                var process = Process.Start(new ProcessStartInfo
+                {
+                    FileName = "where",
+                    Arguments = "AutoHotkey.exe",
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    CreateNoWindow = true
+                });
+
+                if (process != null)
+                {
+                    process.WaitForExit();
+                    if (process.ExitCode == 0)
+                    {
+                        var output = process.StandardOutput.ReadToEnd().Trim();
+                        if (!string.IsNullOrWhiteSpace(output))
+                        {
+                            var firstPath = output.Split('\n')[0].Trim();
+                            if (System.IO.File.Exists(firstPath))
+                            {
+                                return firstPath;
+                            }
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Ignore errors from 'where' command
+            }
+
+            // If still not found, try just "AutoHotkey.exe" (will work if in PATH)
+            return "AutoHotkey.exe";
+        }
+
+        private (string executable, string script) GetAutoHotkeyInfo(string channelName)
+        {
+            var ahkExecutable = FindAutoHotkeyExecutable();
+            var baseDirectory = AppDomain.CurrentDomain.BaseDirectory;
+            
+            // Try to determine AutoHotkey version by testing a simple script
+            var isV2 = TestAutoHotkeyVersion(ahkExecutable);
+            
+            if (isV2)
+            {
+                var v2ScriptPath = System.IO.Path.Combine(baseDirectory, "DiscordNav.ahk");
+                return (ahkExecutable, v2ScriptPath);
+            }
+            else
+            {
+                var v1ScriptPath = System.IO.Path.Combine(baseDirectory, "DiscordNav_v1.ahk");
+                return (ahkExecutable, v1ScriptPath);
+            }
+        }
+
+        private bool TestAutoHotkeyVersion(string ahkExecutable)
+        {
+            try
+            {
+                // Create a simple test script to determine version
+                var tempScript = System.IO.Path.GetTempFileName();
+                var testScriptV2 = "ExitApp()";
+                System.IO.File.WriteAllText(tempScript, testScriptV2);
+
+                var process = Process.Start(new ProcessStartInfo
+                {
+                    FileName = ahkExecutable,
+                    Arguments = $"\"{tempScript}\"",
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                    RedirectStandardError = true
+                });
+
+                if (process != null)
+                {
+                    process.WaitForExit(2000); // Wait up to 2 seconds
+                    var error = process.StandardError.ReadToEnd();
+                    
+                    // Clean up temp file
+                    try { System.IO.File.Delete(tempScript); } catch { }
+                    
+                    // If no syntax errors, it's likely v2
+                    // If there are syntax errors mentioning v1 syntax, it's v1
+                    return process.ExitCode == 0 || !error.Contains("recognized action");
+                }
+            }
+            catch
+            {
+                // If version detection fails, assume v1 for compatibility
+            }
+            
+            return false; // Default to v1
+        }
+
+        private void StartSubmenuParticleEffect(Point originPoint)
+        {
+            if (_particleSystem != null)
+            {
+                // Stop any existing particle effect
+                _particleSystem.Stop();
+                
+                // Start a smaller, more focused particle effect for submenus
+                var maxRadius = 120 * _uiScale; // Smaller radius for submenu effects
+                _particleSystem.ParticleCount = 18; // Fewer particles for submenu
+                _particleSystem.AnimationDuration = TimeSpan.FromMilliseconds(1000); // Shorter duration
+                _particleSystem.StartEnergySpiral(originPoint, maxRadius);
             }
         }
 

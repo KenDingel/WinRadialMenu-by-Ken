@@ -10,6 +10,7 @@ namespace RadialMenu.Models
         public Meta Meta { get; set; } = new Meta();
         public Hotkeys Hotkeys { get; set; } = new Hotkeys();
         public Appearance Appearance { get; set; } = new Appearance();
+        public ExternalTools ExternalTools { get; set; } = new ExternalTools();
     public System.Collections.ObjectModel.ObservableCollection<MenuItemConfig> Menu { get; set; } = new System.Collections.ObjectModel.ObservableCollection<MenuItemConfig>();
     }
 
@@ -22,6 +23,11 @@ namespace RadialMenu.Models
     public class Hotkeys
     {
         public string Toggle { get; set; } = "Win+F12";
+    }
+
+    public class ExternalTools
+    {
+        public string AutoHotkeyPath { get; set; } = "";
     }
 
     public class Appearance : INotifyPropertyChanged

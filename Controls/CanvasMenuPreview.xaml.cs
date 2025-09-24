@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
 using System.IO;
+using System.Windows.Threading;
 using RadialMenu.ViewModels;
 
 namespace RadialMenu.Controls
@@ -12,6 +13,7 @@ namespace RadialMenu.Controls
     public partial class CanvasMenuPreview : UserControl
     {
         private readonly string _logPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "settings.log");
+        private Models.MenuItemConfig? _lastSelectedItem;
 
         private void Log(string message)
         {
@@ -265,6 +267,9 @@ namespace RadialMenu.Controls
                 Canvas.SetTop(hintText, 10);
                 PreviewCanvas.Children.Add(hintText);
 
+                // Trigger particle effects
+                TriggerParticleEffects(vm, center, spread);
+
                 Log("RenderPreview completed");
             }
             catch (Exception ex)
@@ -286,6 +291,147 @@ namespace RadialMenu.Controls
                 }
             }
             return (null, null);
+        }
+
+        private void TriggerParticleEffects(SettingsViewModel vm, Point center, double maxRadius)
+        {
+            try
+            {
+                var selectedItem = vm.SelectedMenuItem;
+                
+                // Only trigger particles if selection has changed or if this is the first render
+                if (selectedItem != _lastSelectedItem)
+                {
+                    Log($"Selection changed from '{_lastSelectedItem?.Label}' to '{selectedItem?.Label}', triggering particles");
+                    
+                    // Stop any existing particle animation
+                    ParticleSystem.Stop();
+                    
+                    // Configure particle system based on UI settings
+                    var settings = vm.Working;
+                    var uiScale = settings?.Appearance?.UiScale ?? 1.0;
+                    ParticleSystem.UIScale = uiScale;
+                    ParticleSystem.ParticleCount = 24; // Fixed count for preview
+                    
+                    // Set colors based on selected item or default theme
+                    if (selectedItem != null)
+                    {
+                        try
+                        {
+                            var itemColor = (Color)ColorConverter.ConvertFromString(selectedItem.Color ?? "#FF2D7DD2");
+                            ParticleSystem.PrimaryColor = Color.FromArgb(255, itemColor.R, itemColor.G, itemColor.B);
+                            
+                            // Create a complementary secondary color
+                            var complementaryColor = GetComplementaryColor(itemColor);
+                            ParticleSystem.SecondaryColor = complementaryColor;
+                            
+                            Log($"Using colors from selected item: {selectedItem.Color}");
+                        }
+                        catch
+                        {
+                            // Fallback to default colors
+                            ParticleSystem.PrimaryColor = Color.FromArgb(255, 120, 200, 255);
+                            ParticleSystem.SecondaryColor = Color.FromArgb(255, 180, 100, 255);
+                            Log("Using default particle colors (color parse failed)");
+                        }
+                    }
+                    else
+                    {
+                        // Use default fantasy colors when no selection
+                        ParticleSystem.PrimaryColor = Color.FromArgb(255, 120, 200, 255); // Cyan
+                        ParticleSystem.SecondaryColor = Color.FromArgb(255, 180, 100, 255); // Purple
+                        Log("Using default particle colors (no selection)");
+                    }
+                    
+                    // Add a small delay to let the canvas finish rendering
+                    Dispatcher.BeginInvoke(() =>
+                    {
+                        ParticleSystem.StartEnergySpiral(center, maxRadius * 0.8);
+                        Log($"Started particle spiral at center {center} with radius {maxRadius * 0.8}");
+                    }, DispatcherPriority.Render);
+                    
+                    _lastSelectedItem = selectedItem;
+                }
+                else if (selectedItem != null)
+                {
+                    // Selection hasn't changed but we have a selection - maybe trigger a subtle effect periodically
+                    // This could be enhanced later for continuous ambient effects
+                }
+            }
+            catch (Exception ex)
+            {
+                Log($"TriggerParticleEffects failed: {ex.Message}\n{ex.StackTrace}");
+            }
+        }
+        
+        private Color GetComplementaryColor(Color baseColor)
+        {
+            // Simple complementary color calculation (opposite on color wheel)
+            var h = GetHue(baseColor);
+            var complementaryHue = (h + 180) % 360;
+            return HSVToColor(complementaryHue, 0.8, 0.9);
+        }
+        
+        private double GetHue(Color color)
+        {
+            var r = color.R / 255.0;
+            var g = color.G / 255.0;
+            var b = color.B / 255.0;
+            
+            var max = Math.Max(r, Math.Max(g, b));
+            var min = Math.Min(r, Math.Min(g, b));
+            var delta = max - min;
+            
+            if (delta == 0) return 0;
+            
+            double hue;
+            if (max == r)
+                hue = ((g - b) / delta) % 6;
+            else if (max == g)
+                hue = (b - r) / delta + 2;
+            else
+                hue = (r - g) / delta + 4;
+                
+            return hue * 60;
+        }
+        
+        private Color HSVToColor(double hue, double saturation, double value)
+        {
+            var c = value * saturation;
+            var x = c * (1 - Math.Abs((hue / 60) % 2 - 1));
+            var m = value - c;
+            
+            double r, g, b;
+            
+            if (hue < 60)
+            {
+                r = c; g = x; b = 0;
+            }
+            else if (hue < 120)
+            {
+                r = x; g = c; b = 0;
+            }
+            else if (hue < 180)
+            {
+                r = 0; g = c; b = x;
+            }
+            else if (hue < 240)
+            {
+                r = 0; g = x; b = c;
+            }
+            else if (hue < 300)
+            {
+                r = x; g = 0; b = c;
+            }
+            else
+            {
+                r = c; g = 0; b = x;
+            }
+            
+            return Color.FromArgb(255, 
+                (byte)((r + m) * 255), 
+                (byte)((g + m) * 255), 
+                (byte)((b + m) * 255));
         }
     }
 }

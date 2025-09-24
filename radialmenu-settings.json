@@ -1,0 +1,306 @@
+{
+  "Version": 2,
+  "Meta": {
+    "ProfileName": "Default",
+    "LastModified": "2025-09-24T05:50:15.9778362Z"
+  },
+  "Hotkeys": {
+    "Toggle": "Win+F12"
+  },
+  "Appearance": {
+    "UiScale": 1.5,
+    "InnerRadius": 50.0,
+    "OuterRadius": 150.0,
+    "Theme": "dark",
+    "CenterText": "UWU OS",
+    "Colors": {}
+  },
+  "Menu": [
+    {
+      "Id": "pf123456-1234-5678-9abc-def012345678",
+      "Label": "Screenshots",
+      "Icon": "📸",
+      "Color": "#FF2196F3",
+      "Action": "",
+      "Path": "",
+      "Submenu": [
+        {
+          "Id": "fd123457-1234-5678-9abc-def012345679",
+          "Label": "ShareX Screenshots",
+          "Icon": "📸",
+          "Color": "#FF2196F3",
+          "Action": "launch",
+          "Path": "C:\\Users\\Digit\\OneDrive\\Documents\\ShareX\\Screenshots",
+          "Submenu": null
+        },
+        {
+          "Id": "fd123458-1234-5678-9abc-def012345680",
+          "Label": "VRChat Pictures",
+          "Icon": "📷",
+          "Color": "#FF4CAF50",
+          "Action": "launch",
+          "Path": "C:\\Users\\Digit\\OneDrive\\Pictures\\VRChat",
+          "Submenu": null
+        }
+      ]
+    },
+    {
+      "Id": "cf123456-1234-5678-9abc-def012345678",
+      "Label": "Creative Folders",
+      "Icon": "🎬",
+      "Color": "#FFE91E63",
+      "Action": "",
+      "Path": "",
+      "Submenu": [
+        {
+          "Id": "pg123462-1234-5678-9abc-def012345690",
+          "Label": "Serato DJ Pro",
+          "Icon": "🎛️",
+          "Color": "#FF8BC34A",
+          "Action": "launch",
+          "Path": "C:\\Program Files\\Serato\\Serato DJ Pro\\",
+          "Submenu": null
+        },
+        {
+          "Id": "pg123460-1234-5678-9abc-def012345688",
+          "Label": "4K Video Downloader",
+          "Icon": "⬇️",
+          "Color": "#FF4CAF50",
+          "Action": "launch",
+          "Path": "C:\\Program Files\\4KDownload\\4kvideodownloaderplus\\4kvideodownloaderplus.exe",
+          "Submenu": null
+        },
+        {
+          "Id": "fd12345a-1234-5678-9abc-def012345682",
+          "Label": "DJ Music",
+          "Icon": "🎵",
+          "Color": "#FFFF5722",
+          "Action": "launch",
+          "Path": "G:\\6. DJ Music",
+          "Submenu": null
+        }
+      ]
+    },
+    {
+      "Id": "dv123456-1234-5678-9abc-def012345678",
+      "Label": "Development",
+      "Icon": "💻",
+      "Color": "#FF8BC34A",
+      "Action": "",
+      "Path": "",
+      "Submenu": [
+        {
+          "Id": "fd12345b-1234-5678-9abc-def012345683",
+          "Label": "WubDrive (Network)",
+          "Icon": "🌐",
+          "Color": "#FF607D8B",
+          "Action": "launch",
+          "Path": "\\\\SERVER-01\\WubDrive",
+          "Submenu": null
+        },
+        {
+          "Id": "fd12345c-1234-5678-9abc-def012345684",
+          "Label": "Coding Projects",
+          "Icon": "💻",
+          "Color": "#FF8BC34A",
+          "Action": "launch",
+          "Path": "G:\\0.PriorityCodingProjects",
+          "Submenu": null
+        }
+      ]
+    },
+    {
+      "Id": "ca123456-1234-5678-9abc-def012345678",
+      "Label": "Creative Apps",
+      "Icon": "🎨",
+      "Color": "#FFFF6D00",
+      "Action": "",
+      "Path": "",
+      "Submenu": [
+        {
+          "Id": "pg123458-1234-5678-9abc-def012345680",
+          "Label": "Photoshop",
+          "Icon": "🖌️",
+          "Color": "#FF2196F3",
+          "Action": "launch",
+          "Path": "C:\\Program Files\\Adobe\\Adobe Photoshop 2025\\Photoshop.exe",
+          "Submenu": null
+        },
+        {
+          "Id": "pg123459-1234-5678-9abc-def012345681",
+          "Label": "Media Encoder",
+          "Icon": "📺",
+          "Color": "#FF4CAF50",
+          "Action": "launch",
+          "Path": "C:\\Program Files\\Adobe\\Adobe Media Encoder 2025\\Adobe Media Encoder.exe",
+          "Submenu": null
+        },
+        {
+          "Id": "pg12345a-1234-5678-9abc-def012345682",
+          "Label": "Premiere Pro",
+          "Icon": "🎬",
+          "Color": "#FFE91E63",
+          "Action": "launch",
+          "Path": "C:\\Program Files\\Adobe\\Adobe Premiere Pro 2025\\Adobe Premiere Pro.exe",
+          "Submenu": null
+        },
+        {
+          "Id": "fd123459-1234-5678-9abc-def012345681",
+          "Label": "Video Projects - Personal",
+          "Icon": "🎬",
+          "Color": "#FFE91E63",
+          "Action": "launch",
+          "Path": "E:\\2. Video Projects\\9. Personal",
+          "Submenu": null
+        }
+      ]
+    },
+    {
+      "Id": "a24c82bd-4fec-4c51-8dd2-b97c82993624",
+      "Label": "Programs",
+      "Icon": "📱",
+      "Color": null,
+      "Action": "",
+      "Path": "",
+      "Submenu": [
+        {
+          "Id": "pg123467-1234-5678-9abc-def012345695",
+          "Label": "Discord",
+          "Icon": "💜",
+          "Color": "#FF7289DA",
+          "Action": "launch",
+          "Path": "C:\\Users\\Digit\\AppData\\Local\\Discord\\Update.exe --processStart Discord.exe",
+          "Submenu": null
+        },
+        {
+          "Id": "pg12345c-1234-5678-9abc-def012345684",
+          "Label": "Brave Browser",
+          "Icon": "🦁",
+          "Color": "#FFFF5722",
+          "Action": "launch",
+          "Path": "C:\\Program Files\\BraveSoftware\\Brave-Browser\\Application\\brave.exe",
+          "Submenu": null
+        },
+        {
+          "Id": "pg12345d-1234-5678-9abc-def012345685",
+          "Label": "NoMachine",
+          "Icon": "🖥️",
+          "Color": "#FF673AB7",
+          "Action": "launch",
+          "Path": "C:\\Program Files\\NoMachine\\bin\\nxplayer.exe",
+          "Submenu": null
+        },
+        {
+          "Id": "pg123465-1234-5678-9abc-def012345693",
+          "Label": "VS Code",
+          "Icon": "💻",
+          "Color": "#FF2196F3",
+          "Action": "launch",
+          "Path": "C:\\Users\\Digit\\AppData\\Local\\Programs\\Microsoft VS Code\\Code.exe",
+          "Submenu": null
+        }
+      ]
+    },
+    {
+      "Id": "av123456-1234-5678-9abc-def012345678",
+      "Label": "Audio & VR",
+      "Icon": "🎵",
+      "Color": "#FFFF5722",
+      "Action": "",
+      "Path": "",
+      "Submenu": [
+        {
+          "Id": "pg123463-1234-5678-9abc-def012345691",
+          "Label": "Mixed In Key",
+          "Icon": "🔑",
+          "Color": "#FFFFC107",
+          "Action": "launch",
+          "Path": "C:\\Users\\Digit\\AppData\\Local\\Programs\\Mixed In Key\\Mixed in Key 10\\MixedInKey.exe",
+          "Submenu": []
+        },
+        {
+          "Id": "pg123466-1234-5678-9abc-def012345694",
+          "Label": "VRCX",
+          "Icon": "🎮",
+          "Color": "#FF4CAF50",
+          "Action": "launch",
+          "Path": "C:\\Program Files\\VRCX\\VRCX.exe",
+          "Submenu": null
+        },
+        {
+          "Id": "pg123468-1234-5678-9abc-def012345696",
+          "Label": "Virtual Desktop Streamer",
+          "Icon": "📡",
+          "Color": "#FF9C27B0",
+          "Action": "launch",
+          "Path": "C:\\Program Files\\Virtual Desktop Streamer\\VirtualDesktop.Streamer.exe",
+          "Submenu": null
+        },
+        {
+          "Id": "pg12345f-1234-5678-9abc-def012345687",
+          "Label": "OBS Studio",
+          "Icon": "🎥",
+          "Color": "#FF9C27B0",
+          "Action": "launch",
+          "Path": "C:\\Program Files\\obs-studio\\bin\\64bit\\obs64.exe",
+          "Submenu": null
+        }
+      ]
+    },
+    {
+      "Id": "41d30106-2e6f-4c32-b79a-2eb7f3072d0c",
+      "Label": "Website",
+      "Icon": "🌐",
+      "Color": "#FFFFC107",
+      "Action": "",
+      "Path": "",
+      "Submenu": [
+        {
+          "Id": "2c43a4c1-6da8-49dd-a901-2c9dc7289311",
+          "Label": "420 FM",
+          "Icon": "📄",
+          "Color": "#FF4CAF50",
+          "Action": "launch",
+          "Path": "https://vrc.group/420FM.3730",
+          "Submenu": null
+        },
+        {
+          "Id": "f9f56b6b-7d90-4158-a1ea-5a1e305f9f8b",
+          "Label": "DJ Sheet",
+          "Icon": "📈",
+          "Color": "#FFFF9800",
+          "Action": "launch",
+          "Path": "https://docs.google.com/spreadsheets/d/1jpJMJ4_-XH96ugGThPJ5mVgOIod1FGoubgr7HSsq3u0/edit?gid=0#gid=0",
+          "Submenu": null
+        },
+        {
+          "Id": "015c93bb-cea7-4d5d-acd5-e64c840d020b",
+          "Label": "VRCDN",
+          "Icon": "▶️",
+          "Color": "#FF4CAF50",
+          "Action": "launch",
+          "Path": "https://panel.vrcdn.live/live.php",
+          "Submenu": null
+        },
+        {
+          "Id": "a5fc7365-6bdb-4ecf-aeef-a05fc9ee3666",
+          "Label": "K3N Preview",
+          "Icon": "📄",
+          "Color": "#FF03A9F4",
+          "Action": "launch",
+          "Path": "https://panel.vrcdn.live/preview/k3n",
+          "Submenu": []
+        },
+        {
+          "Id": "4d9a17a3-673a-49ea-a854-8b3521b94f45",
+          "Label": "CLOCK",
+          "Icon": "🔄",
+          "Color": "#FFFF9800",
+          "Action": "launch",
+          "Path": "https://time.is/",
+          "Submenu": null
+        }
+      ]
+    }
+  ]
+}

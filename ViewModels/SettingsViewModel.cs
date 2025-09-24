@@ -158,7 +158,7 @@ namespace RadialMenu.ViewModels
         public RelayCommand SelectIconCommand { get; }
         public RelayCommand BulkChangeColorCommand { get; }
 
-        public System.Collections.Generic.List<string> ActionTypes { get; } = new() { "None", "launch", "run" };
+        public System.Collections.Generic.List<string> ActionTypes { get; } = new() { "None", "launch", "run", "discord" };
         
         // Color palette for menu item colors
         public System.Collections.Generic.List<ColorOption> AvailableColors { get; } = ColorPalette.PredefinedColors;

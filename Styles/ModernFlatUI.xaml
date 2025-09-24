@@ -345,8 +345,7 @@
                                Width="20"
                                Height="20"
                                Background="{TemplateBinding Foreground}"
-                               BorderThickness="0"
-                               Style="{StaticResource {x:Static ToolBar.ThumbStyleKey}}"/>
+                               BorderThickness="0"/>
                     </Grid>
                 </ControlTemplate>
             </Setter.Value>
