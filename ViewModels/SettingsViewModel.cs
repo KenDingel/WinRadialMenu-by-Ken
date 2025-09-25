@@ -8,6 +8,7 @@ using RadialMenu.Models;
 using RadialMenu.Services;
 using System.Windows.Threading;
 using System.Windows;
+using RadialMenu.Utilities;
 
 namespace RadialMenu.ViewModels
 {
@@ -441,7 +442,8 @@ namespace RadialMenu.ViewModels
                     case "clipboard":
                         if (!string.IsNullOrEmpty(SelectedMenuItem.Path))
                         {
-                            System.Windows.Clipboard.SetText(SelectedMenuItem.Path);
+                            // Silently attempt clipboard operation - no error messages
+                            ClipboardHelper.SetText(SelectedMenuItem.Path);
                         }
                         break;
 

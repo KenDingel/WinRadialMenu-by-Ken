@@ -16,6 +16,7 @@ using System.Windows.Threading;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using RadialMenu.Controls;
+using RadialMenu.Utilities;
 
 namespace RadialMenu
 {
@@ -1769,7 +1770,8 @@ namespace RadialMenu
                         case "clipboard":
                             if (!string.IsNullOrWhiteSpace(item.Config.Path))
                             {
-                                System.Windows.Clipboard.SetText(item.Config.Path);
+                                // Silently attempt clipboard operation - no error messages or logging
+                                ClipboardHelper.SetText(item.Config.Path);
                             }
                             break;
 
