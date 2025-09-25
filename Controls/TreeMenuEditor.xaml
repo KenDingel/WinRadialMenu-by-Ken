@@ -2,9 +2,13 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="clr-namespace:RadialMenu.Controls">
-    <StackPanel Orientation="Vertical" HorizontalAlignment="Stretch" Margin="0,0,0,8">
+    <Grid Margin="0,0,0,8">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
         <!-- Modern Flat Toolbar -->
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Stretch" Margin="0,0,0,12" Background="{StaticResource SurfaceBrush}">
+        <StackPanel Grid.Row="0" Orientation="Horizontal" HorizontalAlignment="Stretch" Margin="0,0,0,12" Background="{StaticResource SurfaceBrush}">
             <Button Content="Add Item" Command="{Binding AddMenuItemCommand}" 
                     Style="{StaticResource ModernFlatButtonStyle}" Margin="0,0,8,0"/>
             <Button Content="Duplicate" Command="{Binding DuplicateMenuItemCommand}" 
@@ -23,7 +27,7 @@
         </StackPanel>
 
         <!-- Grid containing Tree View and Status -->
-        <Grid>
+        <Grid Grid.Row="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
@@ -74,6 +78,6 @@
                        FontSize="12"
                        FontStyle="Italic"/>
         </Grid>
-    </StackPanel>
+    </Grid>
 </UserControl>
 
