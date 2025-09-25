@@ -198,10 +198,72 @@
                                 Background="Transparent"
                                 CornerRadius="4"
                                 Padding="{TemplateBinding Padding}">
-                            <ContentPresenter x:Name="PART_Header"
-                                            ContentSource="Header"
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="20"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <!-- Expand/Collapse Toggle Button (Arrow) -->
+                                <ToggleButton x:Name="Expander"
+                                            Grid.Column="0"
+                                            Width="16"
+                                            Height="16"
                                             HorizontalAlignment="Left"
-                                            VerticalAlignment="Center"/>
+                                            VerticalAlignment="Center"
+                                            IsChecked="{Binding Path=IsExpanded, RelativeSource={RelativeSource TemplatedParent}}"
+                                            ClickMode="Press"
+                                            Background="Transparent"
+                                            BorderThickness="0"
+                                            Focusable="False">
+                                    <ToggleButton.Template>
+                                        <ControlTemplate TargetType="ToggleButton">
+                                            <Border Background="Transparent" Width="16" Height="16">
+                                                <Path x:Name="ExpandPath"
+                                                    Fill="{StaticResource OnSurfaceSecondaryBrush}"
+                                                    HorizontalAlignment="Center"
+                                                    VerticalAlignment="Center"
+                                                    Data="M4,6 L6,6 L10,10 L6,14 L4,14 L8,10 Z"
+                                                    RenderTransformOrigin="0.5,0.5">
+                                                    <Path.RenderTransform>
+                                                        <RotateTransform Angle="0"/>
+                                                    </Path.RenderTransform>
+                                                </Path>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsChecked" Value="True">
+                                                    <Trigger.EnterActions>
+                                                        <BeginStoryboard>
+                                                            <Storyboard>
+                                                                <DoubleAnimation Storyboard.TargetName="ExpandPath"
+                                                                               Storyboard.TargetProperty="RenderTransform.Angle"
+                                                                               To="90" Duration="0:0:0.2"/>
+                                                            </Storyboard>
+                                                        </BeginStoryboard>
+                                                    </Trigger.EnterActions>
+                                                    <Trigger.ExitActions>
+                                                        <BeginStoryboard>
+                                                            <Storyboard>
+                                                                <DoubleAnimation Storyboard.TargetName="ExpandPath"
+                                                                               Storyboard.TargetProperty="RenderTransform.Angle"
+                                                                               To="0" Duration="0:0:0.2"/>
+                                                            </Storyboard>
+                                                        </BeginStoryboard>
+                                                    </Trigger.ExitActions>
+                                                </Trigger>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="ExpandPath" Property="Fill" Value="{StaticResource OnSurfaceBrush}"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </ToggleButton.Template>
+                                </ToggleButton>
+                                <!-- Content -->
+                                <ContentPresenter x:Name="PART_Header"
+                                                Grid.Column="1"
+                                                ContentSource="Header"
+                                                HorizontalAlignment="Left"
+                                                VerticalAlignment="Center"/>
+                            </Grid>
                         </Border>
                         <ItemsPresenter x:Name="ItemsHost" 
                                       Grid.Row="1" 
@@ -209,6 +271,9 @@
                                       Visibility="Collapsed"/>
                     </Grid>
                     <ControlTemplate.Triggers>
+                        <Trigger Property="HasItems" Value="False">
+                            <Setter TargetName="Expander" Property="Visibility" Value="Hidden"/>
+                        </Trigger>
                         <Trigger Property="IsExpanded" Value="True">
                             <Setter TargetName="ItemsHost" Property="Visibility" Value="Visible"/>
                         </Trigger>
@@ -246,8 +311,7 @@
                                     Margin="{TemplateBinding Padding}"
                                     VerticalAlignment="Center"/>
                     </Border>
-                    <ControlTemplate.Triggers>
-                        <Trigger Property="IsFocused" Value="True">
+                    <ControlTemplate.Triggers>                        <Trigger Property="IsFocused" Value="True">
                             <Setter TargetName="BackgroundBorder" Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
                             <Setter TargetName="BackgroundBorder" Property="Effect" Value="{StaticResource ElevationShadow2}"/>
                         </Trigger>
