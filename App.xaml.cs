@@ -17,6 +17,7 @@ namespace RadialMenu
         private GlobalHotKey? _settingsHotKey;
         private Mutex? _mutex;
         private Services.SettingsService? _settingsService;
+        private Services.DesktopClickDetectionService? _desktopClickService;
         public Services.SettingsService? SettingsService => _settingsService;
 
         protected override void OnStartup(StartupEventArgs e)
@@ -54,6 +55,10 @@ namespace RadialMenu
 
             // Create radial menu window (hidden initially)
             _radialMenu = new RadialMenuWindow();
+
+            // Initialize desktop click detection service
+            _desktopClickService = new Services.DesktopClickDetectionService();
+            _desktopClickService.DesktopHoldCompleted += OnDesktopHoldCompleted;
 
             // Register global hotkey from settings
             RegisterHotkeyFromSettings();
@@ -108,6 +113,17 @@ namespace RadialMenu
                 else if (_radialMenu != null && _radialMenu.IsVisible)
                 {
                     _radialMenu.Hide();
+                }
+            });
+        }
+
+        private void OnDesktopHoldCompleted(int x, int y)
+        {
+            Dispatcher.Invoke(() =>
+            {
+                if (_radialMenu != null && !_radialMenu.IsVisible)
+                {
+                    _radialMenu.ShowAt(x, y);
                 }
             });
         }
@@ -248,6 +264,7 @@ namespace RadialMenu
         {
             _settingsHotKey?.Unregister();
             _hotKey?.Unregister();
+            _desktopClickService?.Dispose();
             _notifyIcon?.Dispose();
             _mutex?.Dispose();
             base.OnExit(e);

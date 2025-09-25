@@ -13,11 +13,11 @@ if errorlevel 1 (
 )
 
 echo Restoring packages...
-dotnet restore
+dotnet restore RadialMenu.csproj
 
 echo.
 echo Building Release version...
-dotnet build -c Release
+dotnet build -c Release RadialMenu.csproj
 
 if errorlevel 1 (
     echo.
