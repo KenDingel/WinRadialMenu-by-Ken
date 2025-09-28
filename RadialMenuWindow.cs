@@ -111,6 +111,7 @@ namespace RadialMenu
 
         public RadialMenuWindow()
         {
+            Log("RadialMenuWindow constructor started");
             // Initialize hover execute timer
             _hoverExecuteTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(500) };
             _hoverExecuteTimer.Tick += (s, e) =>
@@ -142,11 +143,33 @@ namespace RadialMenu
             catch { }
 
             InitializeComponent();
+            Log($"RadialMenuWindow initialized - Visible: {IsVisible}, Opacity: {Opacity}, WindowState: {WindowState}");
             LoadConfiguration();
+            
+            // Ensure the window is completely prepared and hidden
+            EnsureWindowHidden();
+            
+            Log("RadialMenuWindow constructor completed");
+        }
+        
+        private void EnsureWindowHidden()
+        {
+            Log("EnsureWindowHidden called");
+            
+            // Make absolutely sure the window is hidden and transparent
+            Visibility = Visibility.Hidden;
+            Opacity = 0;
+            
+            // Ensure no animations are running
+            BeginAnimation(OpacityProperty, null);
+            _isAnimating = false;
+            
+            Log($"EnsureWindowHidden completed - Visibility: {Visibility}, Opacity: {Opacity}");
         }
 
         private void InitializeComponent()
         {
+            Log("InitializeComponent started");
             // Window settings
             Title = "RadialMenu";
             WindowStyle = WindowStyle.None;
@@ -157,6 +180,11 @@ namespace RadialMenu
             Width = 1800 * _uiScale; // Increased by 200% (3x original size)
             Height = 1800 * _uiScale; // Increased by 200% (3x original size)
             WindowStartupLocation = WindowStartupLocation.Manual;
+            
+            // Ensure window starts completely invisible to prevent flash
+            Visibility = Visibility.Hidden;
+            Opacity = 0;
+            Log($"InitializeComponent - window properties set, Visibility: {Visibility}, Opacity: {Opacity}");
             
             // Main canvas
             _canvas = new Canvas
@@ -728,7 +756,12 @@ namespace RadialMenu
 
     public void ShowAt(int x, int y)
         {
-            if (_isAnimating) return;
+            Log($"ShowAt called - IsVisible: {IsVisible}, Opacity: {Opacity}, IsAnimating: {_isAnimating}");
+            if (_isAnimating) 
+            {
+                Log("ShowAt blocked - animation in progress");
+                return;
+            }
 
             // Store the cursor position for potential window positioning
             _activationCursorPos = new Point(x, y);
@@ -739,13 +772,22 @@ namespace RadialMenu
 
             Log($"ShowAt called at cursor position ({x}, {y}). Config items: {_config?.Items?.Count ?? 0}. Canvas size: {_canvas.Width}x{_canvas.Height}. Center: {_centerPoint}");
 
-            // Clear all canvas children except center elements
+            // Clear all canvas children except center elements (while window is invisible)
+            Log($"ShowAt - clearing canvas (current children: {_canvas.Children.Count})");
             UIElement[] centerElements = { _centerCircle, _centerText };
+            
+            // Temporarily disable rendering updates during canvas operations
+            _canvas.IsHitTestVisible = false;
+            
             _canvas.Children.Clear();
             foreach (var elem in centerElements)
             {
                 _canvas.Children.Add(elem);
             }
+            
+            // Re-enable hit testing after canvas is rebuilt
+            _canvas.IsHitTestVisible = true;
+            Log("ShowAt - canvas cleared and center elements re-added");
 
             // Reposition center circle and center text to be perfectly centered
             PositionCenterElements();
@@ -787,11 +829,29 @@ namespace RadialMenu
             // Create fresh particle system every time
             CreateEnergyParticleSystem();
             
-            // Set opacity to 0 before showing to prevent flash
+            // Ensure opacity is 0 and prepare window for showing
+            Log($"ShowAt - ensuring opacity is 0 (current: {Opacity})");
             Opacity = 0;
-            Show();
+            
+            // Force layout update before showing to prevent flash
+            UpdateLayout();
+            Log("ShowAt - layout updated");
+            
+            // Use Visibility instead of Show() to have more control
+            if (!IsVisible)
+            {
+                Log($"ShowAt - making window visible (IsVisible: {IsVisible})");
+                Visibility = Visibility.Visible;
+            }
+            
+            Log($"ShowAt - activating window (IsVisible: {IsVisible})");
             Activate();
-            AnimateIn();
+            
+            // Small delay to ensure window is fully rendered before animation
+            Dispatcher.BeginInvoke(new Action(() => {
+                Log($"ShowAt - calling AnimateIn() (IsVisible: {IsVisible}, Opacity: {Opacity})");
+                AnimateIn();
+            }), System.Windows.Threading.DispatcherPriority.Render);
         }
 
         private List<RadialMenuItem> LoadMenuItems(List<ConfigItem> configItems, Point? origin = null)
@@ -1908,21 +1968,28 @@ namespace RadialMenu
 
         private void OnDeactivated(object? sender, EventArgs e)
         {
+            Log("Window deactivated - hiding menu");
             HideMenu();
         }
 
         private void HideMenu()
         {
+            Log("HideMenu called");
             _hoverExecuteTimer.Stop();
             AnimateOut(() => Hide());
         }
 
         private void AnimateIn()
         {
+            Log($"AnimateIn started - Opacity: {Opacity}, IsVisible: {IsVisible}");
             _isAnimating = true;
             // Opacity should already be set to 0 before Show() is called
             var fadeIn = new DoubleAnimation(0, 1, TimeSpan.FromMilliseconds(200));
-            fadeIn.Completed += (s, e) => _isAnimating = false;
+            fadeIn.Completed += (s, e) => {
+                _isAnimating = false;
+                Log($"AnimateIn completed - Opacity: {Opacity}, IsVisible: {IsVisible}");
+            };
+            Log("AnimateIn - starting fade animation");
             BeginAnimation(OpacityProperty, fadeIn);
 
             // Start the spinning animation
@@ -1951,6 +2018,7 @@ namespace RadialMenu
 
         private void AnimateOut(Action onComplete)
         {
+            Log("AnimateOut started");
             _isAnimating = true;
             
             // Stop the spinning animation
@@ -1963,6 +2031,9 @@ namespace RadialMenu
             fadeOut.Completed += (s, e) =>
             {
                 _isAnimating = false;
+                Log($"AnimateOut completed - hiding window (Opacity: {Opacity})");
+                // Properly hide the window to prevent any residual visibility
+                Visibility = Visibility.Hidden;
                 onComplete();
             };
             BeginAnimation(OpacityProperty, fadeOut);
@@ -2038,6 +2109,29 @@ namespace RadialMenu
         private void StopEnergyParticleEffect()
         {
             _particleSystem?.Stop();
+        }
+
+        // Override Hide to ensure proper hiding and prevent flash
+        public new void Hide()
+        {
+            Log($"Hide called - IsVisible: {IsVisible}, Opacity: {Opacity}");
+            
+            // Stop any ongoing animations
+            if (_isAnimating)
+            {
+                BeginAnimation(OpacityProperty, null); // Stop opacity animation
+                _isAnimating = false;
+            }
+            
+            // Stop effects
+            StopSpinningAnimation();
+            StopEnergyParticleEffect();
+            
+            // Set opacity to 0 and hide
+            Opacity = 0;
+            Visibility = Visibility.Hidden;
+            
+            Log($"Hide completed - IsVisible: {IsVisible}, Opacity: {Opacity}");
         }
 
         private string FindAutoHotkeyExecutable()
